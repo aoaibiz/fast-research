@@ -4,6 +4,15 @@
 
 このファイルの形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に従います。バージョニング方針は本文末尾の「セマンティックバージョニング」を参照してください。
 
+
+## 2026-11-02 (2)
+
+- 社内資料を 1 件ずつ消せる・差し替えられる(`/api/documents/<id>/delete`・`/replace`・自分の資料だけ)。画面の資料の行にごみ箱。
+- バックアップの復元を分けて送る形に(8MB ずつ・PC の中で 1 件ずつ読む・上限は戻した後の資料の容量)。300MB いっぱいでも戻る。
+- AI 用の入口に、自分で選んだ時だけ(`--private`)手元の資料の検索・読み取り・保存の道具(`search_private`・`read_private`・`save_note`)。既定は今までどおり公開 Web だけ。
+- 受け箱 `local-data/inbox/` と、手元の Codex / Claude Code の会話を 1 日 1 件まとめる `workbench.digest`(任意・`--digest-ai-sessions`)。
+- MCP サーバーの名前を `fast-research` に(前の名前 `talmud-research` のままでも動く)。環境変数は `FAST_RESEARCH_…`(前の `TALMUD_RESEARCH_…` も読む)。
+
 ## [Unreleased]
 
 ### 高速リサーチ(fast-research)

@@ -321,6 +321,9 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .doc-col{display:flex;flex-direction:column;gap:14px;min-width:0}
 .list-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
 .list-row:first-of-type{border-top:0;padding-top:0}
+.list-row .btn.sm{display:none}
+.list-row.confirming .rrow-del,.list-row.confirming .rrow-side>.btn-secondary:not(.sm){display:none}
+.list-row.confirming .btn.sm{display:inline-flex}
 .row-text{display:flex;flex-direction:column;gap:2px;min-width:0}
 .row-text strong{font-size:15px;font-weight:800}
 .meta{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}

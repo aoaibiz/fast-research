@@ -38,7 +38,7 @@ class AgentTests(unittest.TestCase):
         self.assertIsNone(research.temporary)
 
     def test_configuration_is_portable_and_does_not_require_a_ui_session(self):
-        spec=config('/fixture/rustxng')['mcpServers']['talmud-research']
+        spec=config('/fixture/rustxng')['mcpServers']['fast-research']
         self.assertTrue(Path(spec['command']).is_absolute())
         self.assertTrue(Path(spec['args'][0]).is_absolute())
         self.assertNotIn('--owner-state',spec['args'])

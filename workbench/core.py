@@ -176,9 +176,9 @@ class Research:
         self.guard=None
         self.backend=backend
         # packaged table + optional per-install additions (env var, data folder)
-        self.official_files=[OFFICIAL_FILE,os.environ.get('TALMUD_RESEARCH_OFFICIAL_DOMAINS')]+list(official_files or [])
-        self.denylist=denylist or os.environ.get('TALMUD_RESEARCH_DENYLIST') or None
-        self.denylist_optional=denylist_optional and not os.environ.get('TALMUD_RESEARCH_DENYLIST')
+        self.official_files=[OFFICIAL_FILE,os.environ.get('FAST_RESEARCH_OFFICIAL_DOMAINS') or os.environ.get('TALMUD_RESEARCH_OFFICIAL_DOMAINS')]+list(official_files or [])
+        self.denylist=denylist or os.environ.get('FAST_RESEARCH_DENYLIST') or os.environ.get('TALMUD_RESEARCH_DENYLIST') or None
+        self.denylist_optional=denylist_optional and not (os.environ.get('FAST_RESEARCH_DENYLIST') or os.environ.get('TALMUD_RESEARCH_DENYLIST'))
         self.opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
 
     def fetch(self, query, profile, domains, *, raw=True):

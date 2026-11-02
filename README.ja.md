@@ -1,6 +1,6 @@
-> 派生版 Talmud Research の現在の入口は [README.md](README.md) です。以下は上流由来の参考資料です。
+> 派生版 高速リサーチ(fast-research)の現在の入口は [README.md](README.md) です。以下は上流由来の参考資料です。
 
-> **Talmud Research edition**: this fork adds safe page fetching, retrieval evidence, a public-only MCP entry for your own AI (see [README.md](README.md) and [docs/INSTALL-AI.md](docs/INSTALL-AI.md)) and an optional local workbench ([docs/WORKBENCH.md](docs/WORKBENCH.md)). Public search queries are sent to external search providers. Upstream performance claims below are not measurements of this modified build.
+> **fast-research edition**: this fork adds safe page fetching, retrieval evidence, an MCP entry for your own AI (public web by default; your own local documents only when you opt in) (see [README.md](README.md) and [docs/INSTALL-AI.md](docs/INSTALL-AI.md)) and an optional local workbench ([docs/WORKBENCH.md](docs/WORKBENCH.md)). Public search queries are sent to external search providers. Upstream performance claims below are not measurements of this modified build.
 
 # RustXNG
 

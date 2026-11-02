@@ -1,4 +1,5 @@
 """Local account-scoped storage. No external connections or request-content logging."""
+import codecs
 import hashlib
 import collections
 import copy
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, owner TEXT NOT NULL RE
 CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, owner TEXT NOT NULL REFERENCES users(id), payload TEXT NOT NULL, created REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS preferences(owner TEXT PRIMARY KEY REFERENCES users(id), payload TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS login_links(digest TEXT PRIMARY KEY, owner TEXT NOT NULL REFERENCES users(id), expires REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS document_versions(owner TEXT PRIMARY KEY, version INTEGER NOT NULL);
 '''
 
 SESSION_SECONDS = 7 * 24 * 3600
@@ -36,8 +38,10 @@ LINK_TOKEN = re.compile(r'[A-Za-z0-9_-]{43}')
 class Store:
     def __init__(self, path, limits=None):
         self.path = Path(path)
-        self._used = {}  # owner -> bytes of documents; computed once from SQLite, then kept in step (a full scan per insert made 10,000 inserts quadratic)
-        self._listing = {}  # owner -> the document list (title / characters / created); length(body) over 300MB costs a second, so it is kept until a document is added
+        # Per-owner caches, each kept with the owner's document version (document_versions: +1 in the same transaction as every
+        # add / replace / delete / restore, by this process or another one such as the MCP entry or the inbox import).
+        self._used = {}  # owner -> (version, bytes of documents); a full scan per insert made 10,000 inserts quadratic
+        self._listing = {}  # owner -> (version, document list); length(body) over 300MB costs a second
         self.limits = {**DEFAULT_LIMITS, **{k: int(v) for k, v in (limits or {}).items() if k in DEFAULT_LIMITS and v}}
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         if self.path.is_symlink():
@@ -64,9 +68,19 @@ class Store:
         return True
 
     def _index_document(self, db, owner, identifier, title, body):
-        self._listing.pop(owner, None)
         if self.fts:
             db.execute('INSERT INTO documents_fts(rowid,owner,doc,title,body) SELECT rowid,?,?,?,? FROM documents WHERE id=?', (owner, identifier, fts_text(title), fts_text(body), identifier))
+
+    @staticmethod
+    def _version(db, owner):
+        row = db.execute('SELECT version FROM document_versions WHERE owner=?', (owner,)).fetchone()
+        return row[0] if row else 0
+
+    def _bump(self, db, owner):
+        """A document change: the version moves on in this transaction, so every process's caches for this owner go stale."""
+        db.execute('INSERT INTO document_versions VALUES(?,1) ON CONFLICT(owner) DO UPDATE SET version=version+1', (owner,))
+        self._used.pop(owner, None); self._listing.pop(owner, None)
+        return self._version(db, owner)
 
     @contextmanager
     def connect(self):
@@ -189,22 +203,83 @@ class Store:
             identifier = secrets.token_hex(16)
             db.execute('INSERT INTO documents VALUES(?,?,?,?,?,?)', (identifier,owner,title.strip(),body,fingerprint,time.time()))
             self._index_document(db, owner, identifier, title, body)
-            self._used[owner]=used+added
-            return identifier
+            cache = (self._bump(db, owner), used+added)
+        self._used[owner] = cache  # only after the commit
+        return identifier
+
+    def document_id_for(self, owner, title, body):
+        """The id of this owner's document with exactly this title and body (the app's fingerprint), or None."""
+        if not isinstance(title, str) or not isinstance(body, str):
+            return None
+        fingerprint = hashlib.sha256((title.strip()+'\0'+body).encode()).hexdigest()
+        with self.connect() as db:
+            row = db.execute('SELECT id FROM documents WHERE owner=? AND fingerprint=?', (owner, fingerprint)).fetchone()
+            return row['id'] if row else None
+
+    def delete_document(self, owner, identifier):
+        """Deletes one document of this owner only (row and index row). True when a row went away."""
+        if not isinstance(identifier, str) or not identifier:
+            return False
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT rowid FROM documents WHERE owner=? AND id=?', (owner, identifier)).fetchone()
+            if not row:
+                return False
+            if self.fts:
+                db.execute('DELETE FROM documents_fts WHERE rowid=?', (row[0],))
+            db.execute('DELETE FROM documents WHERE rowid=?', (row[0],))
+            self._bump(db, owner)
+            return True
+
+    def replace_document(self, owner, identifier, body, title=None):
+        """Replaces the body (and, when given, the title) of one document of this owner, in place: same id, the old body and its
+        index row are gone in the same transaction. None when the id is not this owner's. replaced=0 when nothing changed."""
+        if title is not None and (not isinstance(title, str) or not title.strip() or len(title) > 200):
+            raise ValueError('invalid_title')
+        if not isinstance(body, str) or not body.strip() or len(body) > self.limits['document_chars']:
+            raise ValueError('document_length')
+        if not isinstance(identifier, str) or not identifier:
+            return None
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT rowid,title,length(CAST(title AS BLOB))+length(CAST(body AS BLOB)) AS size FROM documents WHERE owner=? AND id=?', (owner, identifier)).fetchone()
+            if not row:
+                return None
+            title = row['title'] if title is None else title.strip()
+            fingerprint = hashlib.sha256((title+'\0'+body).encode()).hexdigest()
+            same = db.execute('SELECT id FROM documents WHERE owner=? AND fingerprint=?', (owner, fingerprint)).fetchone()
+            if same and same['id'] == identifier:
+                return {'id': identifier, 'replaced': 0}
+            if same:
+                raise ValueError('invalid_request')  # another document already has exactly this title and body
+            used = self._bytes_used(db, owner); size = len(title.encode())+len(body.encode())
+            if used-row['size']+size > self.limits['document_bytes_per_owner']:
+                raise ValueError('document_limit')
+            db.execute('UPDATE documents SET title=?,body=?,fingerprint=?,created=? WHERE rowid=?', (title, body, fingerprint, time.time(), row['rowid']))
+            if self.fts:
+                db.execute('DELETE FROM documents_fts WHERE rowid=?', (row['rowid'],))
+                db.execute('INSERT INTO documents_fts(rowid,owner,doc,title,body) VALUES(?,?,?,?,?)', (row['rowid'], owner, identifier, fts_text(title), fts_text(body)))
+            cache = (self._bump(db, owner), used-row['size']+size)
+        self._used[owner] = cache  # only after the commit
+        return {'id': identifier, 'replaced': 1}
 
     def _bytes_used(self, db, owner):
-        if owner not in self._used:
-            self._used[owner]=db.execute('SELECT coalesce(sum(length(CAST(title AS BLOB))+length(CAST(body AS BLOB))),0) FROM documents WHERE owner=?',(owner,)).fetchone()[0]
-        return self._used[owner]
+        version = self._version(db, owner); cached = self._used.get(owner)
+        if cached and cached[0] == version:
+            return cached[1]
+        used = db.execute('SELECT coalesce(sum(length(CAST(title AS BLOB))+length(CAST(body AS BLOB))),0) FROM documents WHERE owner=?',(owner,)).fetchone()[0]
+        self._used[owner] = (version, used)
+        return used
 
     def documents(self, owner, full=False):
         with self.connect() as db:
             if full:
                 return [dict(r) for r in db.execute('SELECT id,title,body,created FROM documents WHERE owner=? ORDER BY created DESC', (owner,))]
             # listing never loads bodies, and is computed once per change (10,000 documents / 300MB must list in milliseconds)
-            if owner not in self._listing:
-                self._listing[owner] = [dict(r) for r in db.execute('SELECT id,title,length(body) AS characters,created FROM documents WHERE owner=? ORDER BY created DESC', (owner,))]
-            return [dict(r) for r in self._listing[owner]]
+            version = self._version(db, owner); cached = self._listing.get(owner)
+            if not cached or cached[0] != version:
+                cached = self._listing[owner] = (version, [dict(r) for r in db.execute('SELECT id,title,length(body) AS characters,created FROM documents WHERE owner=? ORDER BY created DESC', (owner,))])
+            return [dict(r) for r in cached[1]]
 
     def document_count(self, owner):
         with self.connect() as db:
@@ -319,52 +394,105 @@ class Store:
             reports=[{'payload':json.loads(r['payload']),'created':r['created']} for r in db.execute('SELECT payload,created FROM reports WHERE owner=?',(owner,))]
         return {'format':'rustxng-private-backup-v1','documents':self.documents(owner,True),'preferences':self.preferences(owner),'reports':reports}
 
-    def restore(self, owner, payload):
-        if not isinstance(payload,dict) or payload.get('format') != 'rustxng-private-backup-v1':
-            raise ValueError('invalid_backup')
-        docs = payload.get('documents')
-        if not isinstance(docs,list) or len(docs)>self.limits['documents_per_owner']:
-            raise ValueError('invalid_backup')
-        for doc in docs:
-            if not isinstance(doc,dict) or not isinstance(doc.get('title'),str) or not 0<len(doc['title'])<=200 or not isinstance(doc.get('body'),str) or not 0<len(doc['body'])<=self.limits['document_chars']:
-                raise ValueError('invalid_backup')
-        pref=payload.get('preferences',{'profile':'general'})
-        if not isinstance(pref,dict) or pref.get('profile') not in ('general','development','sales','sns'):raise ValueError('invalid_backup')
-        reports=payload.get('reports',[])
-        if not isinstance(reports,list) or len(reports)>10000:raise ValueError('invalid_backup')
-        for report in reports:
-            if not isinstance(report,dict) or not isinstance(report.get('payload'),dict):raise ValueError('invalid_backup')
-            item=report['payload']
-            if not isinstance(item.get('query'),str) or len(item['query'])>500 or not isinstance(item.get('sources'),list):raise ValueError('invalid_backup')
-            for source in item['sources']:
-                if not isinstance(source,dict):raise ValueError('invalid_backup')
-                url=source.get('url','')
-                if url and (not isinstance(url,str) or not url.startswith(('https://','http://'))):raise ValueError('invalid_backup')
-        # Validate and insert the whole bundle in one transaction. Never trust exported owner/id.
+    def export_to(self, owner, out):
+        """The same backup as export(), written to a binary file one document at a time (a 300MB library is never one string)."""
+        preferences = self.preferences(owner)
         with self.connect() as db:
+            reports=[{'payload':json.loads(r['payload']),'created':r['created']} for r in db.execute('SELECT payload,created FROM reports WHERE owner=?',(owner,))]
+            out.write(b'{"format": "rustxng-private-backup-v1", "documents": [')
+            first = True
+            for r in db.execute('SELECT id,title,body,created FROM documents WHERE owner=? ORDER BY created DESC', (owner,)):
+                out.write((b'' if first else b', ') + json.dumps(dict(r), ensure_ascii=False).encode()); first = False
+            out.write(b'], "preferences": ' + json.dumps(preferences).encode() + b', "reports": ' + json.dumps(reports, ensure_ascii=False).encode() + b'}')
+
+    def restore(self, owner, payload):
+        """Restores a backup given as a parsed object."""
+        if not isinstance(payload,dict):
+            raise ValueError('invalid_backup')
+        members = ((k, iter(copy.deepcopy(v) if k == 'reports' else v) if k in ('documents','reports') and isinstance(v,list) else v) for k, v in payload.items())
+        return self._restore(owner, members)
+
+    def restore_stream(self, owner, fileobj):
+        """Restores a backup read from a binary file, one document at a time: memory stays about one document whatever the size
+        of the file, and the limits are checked on the decoded documents (not on the JSON, where escapes such as \\ double the size)."""
+        reader = _BackupReader(fileobj, element_cap=12*self.limits['document_chars']+4096, report_cap=6*10_000_000+4096)
+        try:
+            return self._restore(owner, reader.members())
+        except UnicodeDecodeError:
+            raise ValueError('invalid_backup') from None
+
+    def _restore(self, owner, members):
+        """One transaction: every document and report is validated before the commit; any refusal leaves the library as it was.
+        Never trusts exported owner/id. Duplicates (same title and body) are not added twice."""
+        def invalid():
+            return ValueError('invalid_backup')
+        with self.connect() as db:
+            # A full library is hundreds of MB in one transaction. Spilling dirty pages mid-transaction would take the exclusive
+            # lock for all of it (every other request's session read waits, then fails); kept in memory, the lock is held at commit only.
+            db.execute('PRAGMA cache_spill=OFF')
             db.execute('BEGIN IMMEDIATE')
-            existing = {r[0] for r in db.execute('SELECT fingerprint FROM documents WHERE owner=?',(owner,))}
-            additions = {}
-            for doc in docs:
-                doc={**doc,'title':doc['title'].strip()}
-                if not doc['title'] or not doc['body'].strip():raise ValueError('invalid_backup')
-                fp=hashlib.sha256((doc['title']+'\0'+doc['body']).encode()).hexdigest()
-                if fp not in existing: additions[fp]=doc
-            if len(existing)+len(additions)>self.limits['documents_per_owner']: raise ValueError('document_limit')
-            self._used.pop(owner,None); self._listing.pop(owner,None)  # restore recounts from the rows (and again on the next insert)
-            used=self._bytes_used(db, owner)
-            if used+sum(len(d['title'].encode())+len(d['body'].encode()) for d in additions.values())>self.limits['document_bytes_per_owner']:raise ValueError('document_limit')
-            self._used.pop(owner,None)
-            for fp,doc in additions.items():
-                identifier=secrets.token_hex(16)
-                db.execute('INSERT INTO documents VALUES(?,?,?,?,?,?)',(identifier,owner,doc['title'],doc['body'],fp,time.time()))
-                self._index_document(db, owner, identifier, doc['title'], doc['body'])
-            id_map={}
-            for doc in docs:
-                fp=hashlib.sha256((doc['title'].strip()+'\0'+doc['body']).encode()).hexdigest()
-                row=db.execute('SELECT id FROM documents WHERE owner=? AND fingerprint=?',(owner,fp)).fetchone()
-                if row and isinstance(doc.get('id'),str):id_map[doc['id']]=row[0]
-            reports=copy.deepcopy(reports)
+            self._bump(db, owner)  # caches of every process are dropped; counted again from the rows
+            existing = {r[0]: r[1] for r in db.execute('SELECT fingerprint,id FROM documents WHERE owner=?',(owner,))}
+            count = len(existing)
+            used = db.execute('SELECT coalesce(sum(length(CAST(title AS BLOB))+length(CAST(body AS BLOB))),0) FROM documents WHERE owner=?',(owner,)).fetchone()[0]
+            fmt = pref = None; reports = []; report_bytes = 0; id_map = {}; added = 0; seen = set()
+            for key, value in members:
+                if key in seen:
+                    raise invalid()
+                seen.add(key)
+                if key == 'format':
+                    fmt = value
+                elif key == 'preferences':
+                    pref = value
+                elif key == 'documents':
+                    if isinstance(value, (dict, str, int, float, bool)) or value is None:
+                        raise invalid()
+                    n = 0
+                    for doc in value:
+                        n += 1
+                        if n > self.limits['documents_per_owner']:
+                            raise invalid()
+                        if not isinstance(doc,dict) or not isinstance(doc.get('title'),str) or not 0<len(doc['title'])<=200 or not isinstance(doc.get('body'),str) or not 0<len(doc['body'])<=self.limits['document_chars']:
+                            raise invalid()
+                        title = doc['title'].strip(); body = doc['body']
+                        if not title or not body.strip():
+                            raise invalid()
+                        fp = hashlib.sha256((title+'\0'+body).encode()).hexdigest()
+                        target = existing.get(fp)
+                        if target is None:
+                            size = len(title.encode())+len(body.encode())
+                            if count+1 > self.limits['documents_per_owner'] or used+size > self.limits['document_bytes_per_owner']:
+                                raise ValueError('document_limit')
+                            target = secrets.token_hex(16)
+                            db.execute('INSERT INTO documents VALUES(?,?,?,?,?,?)',(target,owner,title,body,fp,time.time()))
+                            self._index_document(db, owner, target, title, body)
+                            existing[fp] = target; count += 1; used += size; added += 1
+                        if isinstance(doc.get('id'),str):
+                            id_map[doc['id']] = target
+                elif key == 'reports':
+                    if isinstance(value, (dict, str, int, float, bool)) or value is None:
+                        raise invalid()
+                    for report in value:
+                        if len(reports) >= 10000 or not isinstance(report,dict) or not isinstance(report.get('payload'),dict):
+                            raise invalid()
+                        item = report['payload']
+                        if not isinstance(item.get('query'),str) or len(item['query'])>500 or not isinstance(item.get('sources'),list):
+                            raise invalid()
+                        for source in item['sources']:
+                            if not isinstance(source,dict):
+                                raise invalid()
+                            url = source.get('url','')
+                            if url and (not isinstance(url,str) or not url.startswith(('https://','http://'))):
+                                raise invalid()
+                        report_bytes += len(json.dumps(item, ensure_ascii=False).encode())
+                        if report_bytes > 10000000:
+                            raise ValueError('report_limit')
+                        reports.append(report)
+            if fmt != 'rustxng-private-backup-v1' or 'documents' not in seen:
+                raise invalid()
+            pref = {'profile':'general'} if pref is None else pref
+            if not isinstance(pref,dict) or pref.get('profile') not in ('general','development','sales','sns'):
+                raise invalid()
             def remap(value):
                 if isinstance(value,dict):
                     if value.get('scope')=='private' and value.get('id') in id_map:value['id']=id_map[value['id']]
@@ -378,4 +506,119 @@ class Store:
             for text in additions_reports:
                 db.execute('INSERT INTO reports VALUES(?,?,?,?)',(secrets.token_hex(16),owner,text,time.time()))
             db.execute('INSERT INTO preferences VALUES(?,?) ON CONFLICT(owner) DO UPDATE SET payload=excluded.payload',(owner,json.dumps({'profile':pref['profile']})))
-        return len(additions)
+        return added
+
+    def search_reports(self, owner, query, limit=5):
+        """Saved research whose question or text has more than half of the query's units (the same hit rule as documents),
+        best first (matched units, then newest). Reads at most 10MB (the per-person cap on saved research)."""
+        wanted = terms(query)
+        if not wanted:
+            return []
+        needed = len(wanted) // 2 + 1; scored = []
+        with self.connect() as db:
+            for r in db.execute('SELECT id,payload,created FROM reports WHERE owner=?', (owner,)):
+                try:
+                    p = json.loads(r['payload'])
+                except ValueError:
+                    continue
+                text = (p.get('query') or '') + '\n' + (p.get('markdown') or '')
+                score = len(wanted & terms(text))
+                if score >= needed:
+                    scored.append((score, r['created'], {'id': r['id'], 'query': p.get('query', ''), 'created': r['created'], 'text': text}))
+        scored.sort(key=lambda x: (-x[0], -x[1]))
+        return [x[2] for x in scored[:limit]]
+
+
+_WS = re.compile(r'[ \t\r\n]*')
+
+
+class _BackupReader:
+    """Reads a backup (one JSON object) from a binary file in windows: the members one by one, and the "documents" / "reports"
+    arrays one element at a time. A value is decoded by the json module's own scanner on a window that doubles until the value
+    fits (so a cut value costs at most twice its length); no value may be longer than its cap."""
+    def __init__(self, fileobj, element_cap, report_cap, other_cap=1_000_000):
+        self.file = fileobj; self.decoder = codecs.getincrementaldecoder('utf-8')('strict'); self.json = json.JSONDecoder()
+        self.buf = ''; self.pos = 0; self.eof = False
+        self.caps = {'documents': element_cap, 'reports': report_cap}; self.other_cap = other_cap
+
+    def _fill(self, need):
+        while not self.eof and len(self.buf) - self.pos < need:
+            if self.pos > (1 << 20) and self.pos * 2 > len(self.buf):
+                self.buf = self.buf[self.pos:]; self.pos = 0
+            chunk = self.file.read(max(need - (len(self.buf) - self.pos), 1 << 20))
+            if chunk:
+                self.buf += self.decoder.decode(chunk)
+            else:
+                self.buf += self.decoder.decode(b'', final=True); self.eof = True
+
+    def _peek(self):
+        while True:
+            self._fill(1)
+            self.pos = _WS.match(self.buf, self.pos).end()
+            if self.pos < len(self.buf):
+                return self.buf[self.pos]
+            if self.eof:
+                return ''
+
+    def _expect(self, char):
+        if self._peek() != char:
+            raise ValueError('invalid_backup')
+        self.pos += 1
+
+    def _value(self, cap):
+        self._peek(); window = 1 << 16
+        while True:
+            self._fill(window)
+            try:
+                value, end = self.json.raw_decode(self.buf, self.pos)
+            except json.JSONDecodeError:
+                end = None
+            available = len(self.buf) - self.pos
+            # not decodable yet, or a number that may go on past the window ("12" of "123"): read more, up to the cap
+            if end is None or (end == len(self.buf) and not self.eof):
+                if self.eof or available >= cap:
+                    raise ValueError('invalid_backup')
+                window = min(cap, max(window * 2, available * 2)); continue
+            if end - self.pos > cap:
+                raise ValueError('invalid_backup')
+            self.pos = end
+            return value
+
+    def _array(self, cap):
+        self._expect('[')
+        if self._peek() == ']':
+            self.pos += 1; return
+        while True:
+            yield self._value(cap)
+            char = self._peek()
+            if char == ']':
+                self.pos += 1; return
+            if char != ',':
+                raise ValueError('invalid_backup')
+            self.pos += 1
+
+    def members(self):
+        self._expect('{')
+        if self._peek() == '}':
+            self.pos += 1
+        else:
+            while True:
+                if self._peek() != '"':
+                    raise ValueError('invalid_backup')
+                key = self._value(4096)
+                self._expect(':')
+                if key in self.caps:
+                    elements = self._array(self.caps[key])
+                    yield key, elements
+                    for _ in elements:  # the consumer reads them all; anything left is still checked
+                        pass
+                else:
+                    yield key, self._value(self.other_cap)
+                char = self._peek()
+                if char == '}':
+                    self.pos += 1; break
+                if char != ',':
+                    raise ValueError('invalid_backup')
+                self.pos += 1
+        if self._peek() != '':
+            raise ValueError('invalid_backup')

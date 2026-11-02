@@ -174,7 +174,7 @@ class CapacityTests(HttpCase):
         self.assertEqual(self.app.store.limits, self.limits)
         session = self.request('/api/session', session=self.sa)[1]
         self.assertEqual(({k: session['limits'][k] for k in self.limits}, session['document_count']), (self.limits, 0))
-        self.assertEqual(session['limits']['restore_bytes'], int((400 + 10_000_000) * 1.25) + 1_000_000)
+        self.assertEqual(session['limits']['restore_bytes'], 6 * (400 + 10_000_000) + 256 * 3 + 1_000_000)  # follow-up: the worst-case JSON of a full library
         code, data = self.request('/api/documents', {'title': 'long', 'body': 'x' * 51}, self.sa)
         self.assertEqual((code, data['error']['code'], data['error']['message']), (400, 'document_length', '資料本文を1〜50文字で入力してください。'))
         for i in range(3):
@@ -218,8 +218,13 @@ class CapacityTests(HttpCase):
                     return status
                 self.assertIn(refused('/api/documents', backup), (413, 'closed before the body was read'))
                 self.assertGreater(app.restore_max, len(backup))
-                too_big = b'{"format":"rustxng-private-backup-v1","documents":[],"pad":"' + b'x' * app.restore_max + b'"}'
-                self.assertIn(refused('/api/restore', too_big), (413, 'closed before the body was read'))
+                # follow-up: the cap is now 6x a full library (about 1.9GB by default); a request above it is refused from its
+                # Content-Length alone, so no body of that size has to be built here
+                conn = http.client.HTTPConnection('127.0.0.1', port, timeout=120)
+                conn.putrequest('POST', '/api/restore', skip_host=True)
+                for k, v in {**headers, 'Content-Length': str(app.restore_max + 1)}.items():
+                    conn.putheader(k, v)
+                conn.endheaders(); self.assertEqual(conn.getresponse().status, 413); conn.close()
                 self.assertEqual(app.store.document_count(target_owner), 3, 'nothing was added by the refused requests')
             finally:
                 server.shutdown(); server.server_close(); thread.join()

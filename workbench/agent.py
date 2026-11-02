@@ -1,4 +1,5 @@
-"""AI-first stdio entry: private child backend, no UI, account, DB or daemon required."""
+"""AI-first stdio entry: private child backend, no UI, account, DB or daemon required.
+Opt-in --private: also search / read / save this PC's own private documents (the screen's database in --data; local only)."""
 import argparse
 import errno
 import json
@@ -13,6 +14,10 @@ sys.path.insert(0, str(ROOT))
 from workbench.core import Research, ResearchError
 from workbench.mcp import serve
 from workbench.server import Backend
+from workbench import notes
+from workbench.store import Store
+
+DATA = ROOT / 'local-data'  # the screen's default data folder (workbench/launch.py and workbench.server use the same)
 
 
 def binary_path(explicit=None):
@@ -68,28 +73,58 @@ class ManagedResearch(Research):
                 self.temporary = None
 
 
-def config(binary=None):
-    return {'mcpServers': {'talmud-research': {
-        'command': sys.executable,
-        'args': [str(Path(__file__).resolve()), '--binary', str(binary_path(binary))],
-    }}}
+class PrivateNotes:
+    """The private tools: the local person's documents and saved research in the screen's SQLite (opened on first use)."""
+    def __init__(self, data):
+        self.data = Path(data).expanduser().resolve()
+        self.store = None
+        self.owner = None
+
+    def _open(self):
+        if self.store is None:
+            self.data.mkdir(parents=True, exist_ok=True, mode=0o700)
+            self.store = Store(self.data / 'workbench.sqlite')
+            self.owner = notes.local_owner(self.store)
+        return self.store, self.owner
+
+    def search(self, query, limit=8):
+        store, owner = self._open()
+        return notes.search_private(store, owner, query, limit)
+
+    def read(self, identifier, offset=0):
+        store, owner = self._open()
+        return notes.read_private(store, owner, identifier, offset)
+
+    def save(self, title, body):
+        store, owner = self._open()
+        return notes.save_note(store, owner, title, body)
+
+
+def config(binary=None, private=False, data=None):
+    args = [str(Path(__file__).resolve()), '--binary', str(binary_path(binary))]
+    if private:
+        args += ['--private', '--data', str(Path(data or DATA).expanduser().resolve())]
+    return {'mcpServers': {'fast-research': {'command': sys.executable, 'args': args}}}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--binary', help='Absolute path to this modified rustxng binary')
     parser.add_argument('--print-config', action='store_true', help='Print a machine-specific MCP configuration; do not edit existing host settings')
+    parser.add_argument('--private', action='store_true', help="opt-in: also search, read and save this PC's own private documents (local only)")
+    parser.add_argument('--data', default=str(DATA), help="the screen's data folder (default: local-data next to workbench)")
     args = parser.parse_args()
     if args.print_config:
-        print(json.dumps(config(args.binary), ensure_ascii=False, indent=2))
+        print(json.dumps(config(args.binary, args.private, args.data), ensure_ascii=False, indent=2))
         return
     research = ManagedResearch(args.binary)
+    private = PrivateNotes(args.data) if args.private else None
     previous = signal.getsignal(signal.SIGTERM)
     def terminate(signum, frame):
         raise SystemExit(128 + signum)
     signal.signal(signal.SIGTERM, terminate)
     try:
-        serve(research)
+        serve(research, private)
     except (KeyboardInterrupt, BrokenPipeError):
         pass
     finally:

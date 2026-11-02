@@ -22,11 +22,11 @@ function stored(key, value) {
   return null;
 }
 
-async function api(path, body) {
+async function api(path, body, headers) {
   const ticket = epoch;
   const response = await fetch(path, {
     method: body === undefined ? 'GET' : 'POST',
-    headers: body === undefined ? {} : { 'Content-Type': 'application/json', 'X-CSRF-Token': session?.csrf || '' },
+    headers: body === undefined ? {} : { 'Content-Type': 'application/json', 'X-CSRF-Token': session?.csrf || '', ...headers },
     // a Blob (the backup file) is sent as it is: the browser streams it, nothing is parsed or copied on this side
     body: body === undefined ? undefined : body instanceof Blob ? body : JSON.stringify(body)
   });
@@ -36,10 +36,12 @@ async function api(path, body) {
   if (!response.ok) {
     if (response.status === 401 && path !== '/api/login') clearPrivate();
     const id = data.error?.request_id ? '(処理ID ' + String(data.error.request_id).slice(0, 8) + ')' : '';
-    throw Error((data.error?.message || '処理に失敗しました。') + id);
+    const error = Error((data.error?.message || '処理に失敗しました。') + id); error.status = response.status;
+    throw error;
   }
   return data;
 }
+const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 /* ---------- theme (boot.js applies it before the first paint) ---------- */
 const THEMES = ['auto', 'light', 'dark'];
@@ -309,7 +311,7 @@ function appendHighlighted(parent, text, terms) {
 function hostOf(url) { try { return new URL(url).hostname; } catch { return ''; } }
 
 async function openDocument(id) {
-  const d = await api('/api/documents/' + id); const pre = $('#document-detail'); pre.textContent = d.title + '\n\n' + d.body; pre.hidden = false; pre.scrollIntoView();
+  const d = await api('/api/documents/' + id); const pre = $('#document-detail'); pre.textContent = d.title + '\n\n' + d.body; pre.dataset.id = id; pre.hidden = false; pre.scrollIntoView();
 }
 
 function sourceCard(source) {
@@ -495,7 +497,22 @@ async function loadDocs() {
   for (const doc of d.documents) {
     const row = node('div', undefined, 'list-row');
     const text = node('div', undefined, 'row-text'); text.append(node('strong', doc.title), node('span', Number(doc.characters).toLocaleString('ja-JP') + '文字 · ' + (parseDate(doc.created) ? fmtDate(parseDate(doc.created)) : ''), 'meta'));
-    row.append(text, button('開く', 'btn btn-secondary', () => openDocument(doc.id).catch(e => notice(e.message))));
+    // Same two taps as a saved research: the bin, then 削除する (or やめる). The row goes only after the server said it is gone.
+    const side = node('span', undefined, 'rrow-side');
+    const open = button('開く', 'btn btn-secondary', () => openDocument(doc.id).catch(e => notice(e.message)));
+    const del = button(undefined, 'rrow-del', () => { row.classList.add('confirming'); yes.focus(); });
+    del.setAttribute('aria-label', '削除'); del.title = '削除'; del.append(icon('i-trash'));
+    const yes = button('削除する', 'btn btn-danger-fill sm', async () => {
+      yes.disabled = true;
+      try {
+        await api('/api/documents/' + doc.id + '/delete', {});
+        if ($('#document-detail').dataset.id === doc.id) { $('#document-detail').textContent = ''; $('#document-detail').hidden = true; }
+        notice(''); await loadDocs();
+      } catch (e) { yes.disabled = false; row.classList.remove('confirming'); notice(e.message); }
+    });
+    const no = button('やめる', 'btn btn-secondary sm', () => { row.classList.remove('confirming'); del.focus(); });
+    side.append(open, del, yes, no);
+    row.append(text, side);
     card.append(row);
   }
   list.append(card);
@@ -580,11 +597,35 @@ $('#restore-form').addEventListener('submit', e => {
     const file = $('#restore-file').files[0];
     const most = limits.restore_bytes || 16 * 1024 * 1024;
     if (!file || file.size > most) throw Error(Math.floor(most / 1000000) + 'MB以下のバックアップを選んでください。');
-    const d = await api('/api/restore', file);
+    const d = await restoreInPieces(file);
     const docs = await api('/api/documents'); setDocCount(docs.documents.length);  // the count is right before the message says done
     notice(d.restored + '件を復元しました。');
   });
 });
+// The file goes up in pieces (each well under any tunnel's request cap); the server restores from its copy on disk and the screen
+// asks for the state, so a full library (minutes) never depends on one long request. A lost piece is sent again from where the server is.
+async function restoreInPieces(file) {
+  const up = await api('/api/restore/upload', { size: file.size });
+  const base = '/api/restore/upload/' + up.upload;
+  let offset = 0, misses = 0;
+  while (offset < file.size) {
+    try {
+      const r = await api(base, file.slice(offset, Math.min(file.size, offset + up.chunk_bytes)), { 'Content-Type': 'application/octet-stream', 'X-Upload-Offset': String(offset) });
+      offset = r.received; misses = 0;
+    } catch (e) {
+      if ((e.status && e.status !== 409 && e.status < 500) || ++misses > 4) throw e;
+      await pause(1000 * misses); offset = (await api(base)).received;
+    }
+  }
+  await api(base + '/finish', {});
+  for (misses = 0; ; ) {
+    await pause(1000);
+    let s;
+    try { s = await api(base); misses = 0; } catch (e) { if ((e.status && e.status < 500) || ++misses > 60) throw e; continue; }
+    if (s.state === 'done') return s;
+    if (s.state === 'failed') throw Error(s.error.message);
+  }
+}
 $('#account-form').addEventListener('submit', e => {
   e.preventDefault();
   action(e.target, async () => {
@@ -601,7 +642,7 @@ $('#stop').addEventListener('click', async () => {
 });
 
 /* ---------- AI guide ---------- */
-const aiGuide = 'https://github.com/aoaibiz/fast-research の docs/INSTALL-AI.md を読み、この PC のあなた自身に MCP サーバー「talmud-research」として入れてください。今ある設定は消さずに足してください。入れたら公開情報の検索を 1 回して、出典つきで答えられるか確かめてください。';
+const aiGuide = 'https://github.com/aoaibiz/fast-research の docs/INSTALL-AI.md を読み、この PC のあなた自身に MCP サーバー「fast-research」として入れてください。今ある設定は消さずに足してください。入れたら公開情報の検索を 1 回して、出典つきで答えられるか確かめてください。';
 for (const b of $$('[data-copy-guide]')) b.addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(aiGuide); notice('導入案内をコピーしました。担当のAIの会話に貼り付けてください。'); }
   catch { notice('コピーできませんでした。GitHubの導入手順を開き、そのURLを担当のAIに渡してください。'); }

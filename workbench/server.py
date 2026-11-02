@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import queue
 import secrets
+import shutil
 import signal
 import sqlite3
 import subprocess
@@ -23,6 +24,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 from .store import Store, LINK_SESSION_SECONDS, LINK_SECONDS
 from . import qr
+from . import digest, notes
 from .core import PROFILES, Research, ResearchError
 
 ROOT=Path(__file__).resolve().parent
@@ -48,7 +50,7 @@ MESSAGES={
  'private_term_denied':'登録した社内用語が含まれています。公開Webには送れません。社内資料で検索するか、その語を外してください。',
  'denylist_unreadable':'社内用語の登録ファイルを読み取れないため、公開Webへの検索を止めています。ファイルを確認してください。',
  'backend_missing':'検索エンジンの実行ファイルがありません。エージェントにビルドと復旧を依頼してください。',
- 'identity_invalid':'名乗りの設定を確認してください。TALMUD_RESEARCH_IDENTITY は honest か browser です。',
+ 'identity_invalid':'名乗りの設定を確認してください。FAST_RESEARCH_IDENTITY は honest か browser です。',
 }
 
 SESSION_SECONDS=7*24*3600
@@ -96,13 +98,14 @@ SPAWNER=_Spawner()
 IDENTITIES=('honest','browser')
 def identity_env(environ=None):
     """How the search backend introduces itself to search engines and pages.
-    TALMUD_RESEARCH_IDENTITY=browser (default: the upstream rotating Firefox User-Agent) or honest
-    (one fixed User-Agent naming this tool). TALMUD_RESEARCH_USER_AGENT replaces the honest string."""
+    FAST_RESEARCH_IDENTITY=browser (default: the upstream rotating Firefox User-Agent) or honest
+    (one fixed User-Agent naming this tool). FAST_RESEARCH_USER_AGENT replaces the honest string.
+    The earlier names TALMUD_RESEARCH_IDENTITY / TALMUD_RESEARCH_USER_AGENT are still read."""
     environ=os.environ if environ is None else environ
-    identity=(environ.get('TALMUD_RESEARCH_IDENTITY') or 'browser').strip().lower()
+    identity=(environ.get('FAST_RESEARCH_IDENTITY') or environ.get('TALMUD_RESEARCH_IDENTITY') or 'browser').strip().lower()
     if identity not in IDENTITIES:raise ResearchError('identity_invalid','startup',503)
     env={'RUSTXNG_IDENTITY':identity}
-    agent=(environ.get('TALMUD_RESEARCH_USER_AGENT') or '').strip()
+    agent=(environ.get('FAST_RESEARCH_USER_AGENT') or environ.get('TALMUD_RESEARCH_USER_AGENT') or '').strip()
     if agent:
         if len(agent)>256 or any(ord(ch)<0x20 or ord(ch)==0x7f for ch in agent):raise ResearchError('identity_invalid','startup',503)
         env['RUSTXNG_USER_AGENT']=agent
@@ -167,13 +170,98 @@ def parse_public_origin(value):
     hostport=host if port in (None,443) else f'{host}:{port}'
     return f'https://{hostport}',hostport
 
+class Uploads:
+    """A backup restore in pieces: start (declared size) -> pieces in order (each <= MAX_INPUT, so a tunnel's request cap does not
+    matter) -> finish, which restores from the file on disk in a background thread (the screen asks for the state; no request has
+    to stay open for the minutes a full library takes). Files live in <data>/restore-uploads (0700/0600) and go away when done."""
+    CHUNK=8*1024*1024;IDLE=3600;HEADROOM=64*1024*1024
+    def __init__(self,directory,store):
+        self.dir=Path(directory);self.dir.mkdir(mode=0o700,exist_ok=True);os.chmod(self.dir,0o700);self.store=store
+        for leftover in self.dir.iterdir():  # pieces / exports of a previous run of the server
+            if leftover.is_file() and not leftover.is_symlink():leftover.unlink()
+        self.items={};self.lock=threading.Lock();self.running=threading.Lock()
+    def new_file(self,prefix):
+        path=self.dir/f'{prefix}-{secrets.token_hex(16)}';os.close(os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600));return path
+    def room_for(self,size):
+        if shutil.disk_usage(self.dir).free<size+self.HEADROOM:raise ResearchError('storage_error','storage',507)
+    def _drop(self,token):
+        item=self.items.pop(token,None)
+        if item:item['path'].unlink(missing_ok=True)
+    def start(self,owner,size):
+        self.room_for(size)
+        with self.lock:
+            now=time.monotonic()
+            for token,item in list(self.items.items()):
+                if (item['owner']==owner and item['state']=='uploading') or (item['state']!='restoring' and now-item['touched']>self.IDLE):self._drop(token)
+            token=secrets.token_hex(16)
+            self.items[token]={'owner':owner,'path':self.new_file('restore'),'size':size,'received':0,'state':'uploading','touched':now,'lock':threading.Lock()}
+        return {'ok':True,'upload':token,'size':size,'chunk_bytes':self.CHUNK}
+    def get(self,owner,token):
+        with self.lock:
+            item=self.items.get(token)
+            return item if item and item['owner']==owner else None
+    def append(self,owner,token,offset,data):
+        item=self.get(owner,token)
+        if not item:raise ResearchError('not_found','authorization',404)
+        with item['lock']:
+            if item['state']!='uploading' or offset!=item['received']:raise ResearchError('invalid_request','input',409)
+            if item['received']+len(data)>item['size']:raise ResearchError('invalid_request','input',413)
+            with open(item['path'],'ab') as f:f.write(data)
+            item['received']+=len(data);item['touched']=time.monotonic()
+            return item['received']
+    def finish(self,owner,token):
+        item=self.get(owner,token)
+        if not item:raise ResearchError('not_found','authorization',404)
+        with item['lock']:
+            if item['state']!='uploading' or item['received']!=item['size']:raise ValueError('invalid_backup')
+            if not self.running.acquire(blocking=False):raise ResearchError('rate_limited','input',429)
+            item['state']='restoring'
+        threading.Thread(target=self._run,args=(item,),name='restore',daemon=True).start()
+    def _run(self,item):
+        try:
+            with open(item['path'],'rb') as f:item['restored']=self.store.restore_stream(item['owner'],f)
+            item['state']='done'
+        except ValueError as error:item['state']='failed';item['code']=str(error) if str(error) in MESSAGES else 'invalid_backup'
+        except sqlite3.Error:item['state']='failed';item['code']='storage_error'
+        except Exception:item['state']='failed';item['code']='unexpected_error'
+        finally:
+            item['path'].unlink(missing_ok=True);item['touched']=time.monotonic();self.running.release()
+    def restore_now(self,owner,path):
+        """The one-request restore (a backup sent whole): the same reader, while the caller waits."""
+        if not self.running.acquire(blocking=False):raise ResearchError('rate_limited','input',429)
+        try:
+            with open(path,'rb') as f:return self.store.restore_stream(owner,f)
+        finally:self.running.release()
+
+def inbox_loop(store,data,stop,every=30):
+    """Imports what was dropped in <data>/inbox every `every` seconds (moved to inbox/done/ once stored)."""
+    while not stop.wait(every):
+        try:
+            for event in notes.import_inbox(store,data):logging.info(json.dumps({'stage':'inbox',**event},ensure_ascii=False))
+        except Exception as error:logging.info(json.dumps({'stage':'inbox','event':'error','why':type(error).__name__}))
+
+def digest_loop(data,stop,every=600,hour=3):
+    """--digest-ai-sessions: after `hour` o'clock (local), yesterday's AI session logs once into the inbox."""
+    state=Path(data)/'digest-state.json'
+    while True:
+        try:
+            now=time.localtime();yesterday=time.strftime('%Y-%m-%d',time.localtime(time.time()-86400))
+            done=json.loads(state.read_text()).get('last_day') if state.exists() else None
+            if now.tm_hour>=hour and done!=yesterday:
+                codex,claude=digest.default_sources();digest.write_digest(data,yesterday,codex,claude)
+                notes._write_json(state,{'last_day':yesterday})
+        except Exception as error:logging.info(json.dumps({'stage':'digest','event':'error','why':type(error).__name__}))
+        if stop.wait(every):return
+
 class App:
     def __init__(self,path,port,backend_url,backend=None,public_origin=None,limits=None):
         self.store=Store(path,limits);self.port=port;self.backend=backend
         self.limit_text={**self.store.limits,'document_mb':self.store.limits['document_bytes_per_owner']//1000000}
-        # A backup holds the whole library (documents up to the per-person cap + reports up to 10MB) as JSON; its restore
-        # request may be that large. Every other request keeps MAX_INPUT.
-        self.restore_max=int((self.store.limits['document_bytes_per_owner']+10_000_000)*1.25)+1_000_000
+        # The largest backup file a full library can make: JSON escapes write one byte as up to six (\u0001), so 6x the
+        # documents + reports (10MB), plus the fields of every document. The size that counts is checked on the decoded
+        # documents while restoring; this only bounds what may be uploaded.
+        self.restore_max=6*(self.store.limits['document_bytes_per_owner']+10_000_000)+256*self.store.limits['documents_per_owner']+1_000_000
+        self.uploads=Uploads(Path(path).parent/'restore-uploads',self.store)
         # Optional private-term deny-list next to the database (one term per line).
         self.research=Research(backend_url,denylist=Path(path).parent/'denylist.txt',denylist_optional=True,official_files=[Path(path).parent/'official-domains.txt'])
         self.research.guard=backend.ensure_owned if backend else guard_for_state(Path(path).parent/'backend-instance.json',urlsplit(backend_url).port)
@@ -213,11 +301,35 @@ class Handler(BaseHTTPRequestHandler):
         if attachment:self.send_header('Content-Disposition',f'attachment; filename="{attachment}"')
         if location:self.send_header('Location',location)
         self.end_headers();self.wfile.write(data)
-    def fail(self,status,code,stage='input'):
-        self.app.event(self.request_id,stage,code,time.monotonic()-self.started)
+    def message(self,code):
         message=MESSAGES.get(code,MESSAGES['unexpected_error'])
         if '{' in message:message=message.format(**{k:(f'{v:,}' if isinstance(v,int) else v) for k,v in self.app.limit_text.items()})
-        self.send(status,{'ok':False,'error':{'code':code,'stage':stage,'message':message,'request_id':self.request_id}})
+        return message
+    def fail(self,status,code,stage='input'):
+        self.app.event(self.request_id,stage,code,time.monotonic()-self.started)
+        self.send(status,{'ok':False,'error':{'code':code,'stage':stage,'message':self.message(code),'request_id':self.request_id}})
+    def send_file(self,path,content_type,attachment):
+        """A file on disk as the response body (the backup), copied in pieces."""
+        size=path.stat().st_size
+        self.send_response(200)
+        for k,v in {'Content-Type':content_type,'Content-Length':str(size),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Cross-Origin-Resource-Policy':'same-origin','Content-Security-Policy':"default-src 'self'; frame-ancestors 'none'"}.items():self.send_header(k,v)
+        self.send_header('X-Request-ID',self.request_id);self.send_header('Content-Disposition',f'attachment; filename="{attachment}"');self.end_headers()
+        with open(path,'rb') as f:shutil.copyfileobj(f,self.wfile,1<<20)
+    def length(self,content_type,maximum):
+        if self.headers.get('Content-Type','').split(';')[0]!=content_type:raise ResearchError('invalid_request','input',415)
+        if self.headers.get('Transfer-Encoding'):raise ResearchError('invalid_request','input',400)
+        try:length=int(self.headers.get('Content-Length','0'))
+        except ValueError:raise ResearchError('invalid_request','input',400)
+        if not 0<length<=maximum:raise ResearchError('invalid_request','input',413)
+        self.connection.settimeout(10)
+        return length
+    def read_into(self,f,length):
+        try:
+            while length:
+                piece=self.rfile.read(min(length,1<<20))
+                if not piece:raise ResearchError('invalid_request','input',400)
+                f.write(piece);length-=len(piece)
+        except TimeoutError:raise ResearchError('invalid_request','input',400) from None
     def token(self):
         try:
             cookie=http.cookies.SimpleCookie();cookie.load(self.headers.get('Cookie',''))
@@ -289,7 +401,22 @@ class Handler(BaseHTTPRequestHandler):
             owner=session['owner']
             if method=='POST' and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),session['csrf']):return self.fail(403,'csrf_refused','authorization')
             if path in ('/api/accounts','/api/restart','/api/stop','/api/phone-link') and session['role']!='admin':return self.fail(403,'not_found','authorization')
-            data=self.body(self.app.restore_max if path=='/api/restore' else MAX_INPUT) if method=='POST' else {}
+            # Bodies that are not one JSON object: a restore sent whole (spooled to disk, then read one document at a time) and the pieces of a restore upload.
+            if path=='/api/restore' and method=='POST':
+                length=self.length('application/json',self.app.restore_max);self.app.uploads.room_for(length)
+                spool=self.app.uploads.new_file('single')
+                try:
+                    with open(spool,'wb') as f:self.read_into(f,length)
+                    return self.send(200,{'ok':True,'restored':self.app.uploads.restore_now(owner,spool)})
+                finally:spool.unlink(missing_ok=True)
+            upload=path[len('/api/restore/upload/'):].split('/') if path.startswith('/api/restore/upload/') else None
+            if upload and len(upload)==1 and method=='POST':
+                try:offset=int(self.headers.get('X-Upload-Offset',''))
+                except ValueError:raise ResearchError('invalid_request','input',400)
+                piece=self.rfile.read(self.length('application/octet-stream',MAX_INPUT))
+                if len(piece)!=int(self.headers['Content-Length']):raise ResearchError('invalid_request','input',400)
+                return self.send(200,{'ok':True,'received':self.app.uploads.append(owner,upload[0],offset,piece)})
+            data=self.body() if method=='POST' else {}
             if path=='/api/logout' and method=='POST':
                 self.app.store.logout(self.token());return self.send(200,{'ok':True},cookie=self.session_cookie('',0))
             if path=='/api/phone-link' and method=='POST':
@@ -303,6 +430,13 @@ class Handler(BaseHTTPRequestHandler):
             if path=='/api/documents':
                 if method=='GET':return self.send(200,{'documents':self.app.store.documents(owner)})
                 identifier=self.app.store.add_document(owner,data.get('title'),data.get('body'));return self.send(201,{'ok':True,'id':identifier})
+            # Deleting / replacing a document: this owner's rows only (owner=? in the store); someone else's id is 404 and nothing changes.
+            if path.startswith('/api/documents/') and path.endswith('/delete') and method=='POST':
+                identifier=path[len('/api/documents/'):-len('/delete')]
+                return self.send(200,{'ok':True,'deleted':1}) if self.app.store.delete_document(owner,identifier) else self.fail(404,'not_found','authorization')
+            if path.startswith('/api/documents/') and path.endswith('/replace') and method=='POST':
+                result=self.app.store.replace_document(owner,path[len('/api/documents/'):-len('/replace')],data.get('body'),data.get('title'))
+                return self.send(200,{'ok':True,**result}) if result else self.fail(404,'not_found','authorization')
             if path.startswith('/api/documents/') and method=='GET':
                 doc=self.app.store.document(owner,path.rsplit('/',1)[1])
                 return self.send(200,doc) if doc else self.fail(404,'not_found','authorization')
@@ -341,8 +475,26 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200,{'ok':True,'deleted':1}) if self.app.store.delete_report(owner,identifier) else self.fail(404,'not_found','authorization')
             if path.startswith('/api/reports/') and method=='GET':
                 report=self.app.store.report(owner,path.rsplit('/',1)[1]);return self.send(200,report) if report else self.fail(404,'not_found','authorization')
-            if path=='/api/backup' and method=='GET':return self.send(200,self.app.store.export(owner),attachment='rustxng-private-backup.json')
-            if path=='/api/restore' and method=='POST':return self.send(200,{'ok':True,'restored':self.app.store.restore(owner,data)})
+            if path=='/api/backup' and method=='GET':
+                spool=self.app.uploads.new_file('export')
+                try:
+                    with open(spool,'wb') as f:self.app.store.export_to(owner,f)
+                    return self.send_file(spool,'application/json; charset=utf-8','rustxng-private-backup.json')
+                finally:spool.unlink(missing_ok=True)
+            if path=='/api/restore/upload' and method=='POST':
+                size=data.get('size')
+                if not isinstance(size,int) or isinstance(size,bool) or size<=0:raise ResearchError('invalid_request','input',400)
+                if size>self.app.restore_max:raise ResearchError('invalid_request','input',413)
+                return self.send(200,self.app.uploads.start(owner,size))
+            if upload and len(upload)==2 and upload[1]=='finish' and method=='POST':
+                self.app.uploads.finish(owner,upload[0]);return self.send(202,{'ok':True,'state':'restoring'})
+            if upload and len(upload)==1 and method=='GET':
+                item=self.app.uploads.get(owner,upload[0])
+                if not item:return self.fail(404,'not_found','authorization')
+                state={'ok':True,'state':item['state'],'size':item['size'],'received':item['received']}
+                if item['state']=='done':state['restored']=item['restored']
+                if item['state']=='failed':state['error']={'code':item['code'],'message':self.message(item['code'])}
+                return self.send(200,state)
             if path=='/api/operations' and method=='GET':
                 healthy=False
                 try:
@@ -356,7 +508,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not self.app.backend:raise ResearchError('backend_missing','startup',503)
                 self.app.backend.restart();return self.send(200,{'ok':True,'status':'starting'})
             if path=='/api/mcp-config' and method=='GET':
-                return self.send(200,{'mcpServers':{'talmud-research':{'command':sys.executable,'args':[str(ROOT/'agent.py')]+(['--binary',str(self.app.backend.binary.resolve())] if self.app.backend else [])}}},attachment='talmud-research-mcp.json')
+                return self.send(200,{'mcpServers':{'fast-research':{'command':sys.executable,'args':[str(ROOT/'agent.py')]+(['--binary',str(self.app.backend.binary.resolve())] if self.app.backend else [])}}},attachment='fast-research-mcp.json')
             if path=='/api/source' and method=='GET':
                 import io,zipfile
                 buf=io.BytesIO()
@@ -396,6 +548,7 @@ def main():
     parser.add_argument('--doc-chars',type=int,default=None,help='characters per private document (default 2,000,000)')
     parser.add_argument('--doc-count',type=int,default=None,help='private documents per person (default 10,000)')
     parser.add_argument('--doc-bytes',type=int,default=None,help='bytes of private documents per person (default 300,000,000)')
+    parser.add_argument('--digest-ai-sessions',action='store_true',help="opt-in: once a day, yesterday's Codex / Claude Code session logs of this PC into <data>/inbox (local only)")
     args=parser.parse_args();data=Path(args.data);data.mkdir(parents=True,exist_ok=True,mode=0o700);os.chmod(data,0o700)
     limits={'document_chars':args.doc_chars,'documents_per_owner':args.doc_count,'document_bytes_per_owner':args.doc_bytes}
     if args.issue_login_link:
@@ -413,6 +566,10 @@ def main():
         if backend:backend.stop()
         parser.error(f'--public-origin must be a bare https origin such as https://example.org ({error})')
     server=Server(app)
+    stop=threading.Event()
+    (data/'inbox').mkdir(mode=0o700,exist_ok=True)
+    threading.Thread(target=inbox_loop,args=(app.store,data,stop),name='inbox',daemon=True).start()
+    if args.digest_ai_sessions:threading.Thread(target=digest_loop,args=(data,stop),name='digest',daemon=True).start()
     instance_path=data/'instance.json'
     instance_path.write_text(json.dumps({'pid':os.getpid(),'instance':app.instance}))
     os.chmod(instance_path,0o600)
@@ -423,7 +580,7 @@ def main():
     try:server.serve_forever()
     except KeyboardInterrupt:pass
     finally:
-        server.server_close()
+        stop.set();server.server_close()
         if backend:backend.stop()
 
 if __name__=='__main__':main()
