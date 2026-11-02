@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ instance_name }}</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="{{ instance_name }}">
+</head>
+<body>
+<header>
+  <h1><a href="/">{{ instance_name }}</a></h1>
+  <nav>
+    <a href="/preferences">Preferences</a>
+    <a href="/about">About</a>
+    <a href="/stats">Stats</a>
+  </nav>
+</header>
+{% if has_error %}<section class="answer"><p>{{ error }}</p></section>{% endif %}
+{% include "search_form.html" %}
+{% include "autocomplete.html" %}
+<p class="result-meta">{{ engine_count }} engines available. Type <code>!</code> for a shortcut list, <code>!!</code> to search another service, <code>:</code> for a language.</p>
+<footer>
+  <p>{{ instance_name }} {{ version }} — AGPL-3.0-or-later, a Rust rewrite of <a href="https://github.com/searxng/searxng">SearXNG</a>.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{% if autocomplete != "none" && autocomplete != "" %}
+<script>
+(function () {
+  var input = document.querySelector('input[name="q"]');
+  if (!input) { return; }
+  var list = document.createElement('datalist');
+  list.id = 'search-suggestions';
+  input.setAttribute('list', list.id);
+  document.body.appendChild(list);
+  var controller = null;
+  input.addEventListener('input', function () {
+    var query = input.value.trim();
+    if (query.length < {{ autocomplete_min }}) { list.innerHTML = ''; return; }
+    if (controller) { controller.abort(); }
+    controller = new AbortController();
+    fetch('/autocompleter?q=' + encodeURIComponent(query), { signal: controller.signal })
+      .then(function (response) { return response.json(); })
+      .then(function (suggestions) {
+        list.innerHTML = '';
+        suggestions.forEach(function (suggestion) {
+          var option = document.createElement('option');
+          option.value = suggestion;
+          list.appendChild(option);
+        });
+      })
+      .catch(function () { /* suggestions are optional */ });
+  });
+})();
+</script>
+{% endif %}

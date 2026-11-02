@@ -1,0 +1,92 @@
+# 公式ドメイン表(「公式」の札を出してよいサイト)
+# - 1行に1ドメイン。# から後ろはコメント。そのドメインと、その下のサブドメインに一致する(docs.python.org は python.org でも一致)。
+# - ここに無いサイトは「公式か未確認」のまま。推測で公式と出さない。
+# - 利用者が勝手にサブドメインを作れるサービス(github.io・wordpress.com・blogspot.com・notion.site・qiita.com など)は入れない。
+# - 足したい時は、このファイルに1行足す。または データフォルダの official-domains.txt、環境変数 TALMUD_RESEARCH_OFFICIAL_DOMAINS のファイルに書く(同じ書式)。
+
+# プログラミング言語・ライブラリの説明書
+python.org
+docs.python.org
+peps.python.org
+rust-lang.org
+doc.rust-lang.org
+docs.rs
+tokio.rs
+go.dev
+typescriptlang.org
+nodejs.org
+react.dev
+developer.mozilla.org
+web.dev
+docs.djangoproject.com
+flask.palletsprojects.com
+numpy.org
+pandas.pydata.org
+pytorch.org
+tensorflow.org
+docs.pytest.org
+sqlite.org
+postgresql.org
+dev.mysql.com
+kubernetes.io
+docs.docker.com
+git-scm.com
+kernel.org
+gnu.org
+
+# 標準・規格
+w3.org
+whatwg.org
+ietf.org
+rfc-editor.org
+unicode.org
+ecma-international.org
+
+# 大手のサービス・プラットフォームの公式の説明書・ヘルプ
+developers.cloudflare.com
+docs.github.com
+github.blog
+learn.microsoft.com
+support.microsoft.com
+developer.apple.com
+support.apple.com
+developer.android.com
+developers.google.com
+cloud.google.com
+support.google.com
+blog.google
+docs.aws.amazon.com
+aws.amazon.com
+platform.openai.com
+openai.com
+docs.anthropic.com
+anthropic.com
+developers.line.biz
+developers.facebook.com
+about.fb.com
+about.instagram.com
+help.instagram.com
+developers.tiktok.com
+newsroom.tiktok.com
+blog.youtube
+developer.wordpress.org
+docs.stripe.com
+stripe.com
+
+# 日本の政府・自治体(go.jp は国の機関、lg.jp は地方公共団体だけが登録できる)
+go.jp
+lg.jp
+
+# 海外の政府・国際機関
+gov.uk
+usa.gov
+nih.gov
+cdc.gov
+nist.gov
+sec.gov
+irs.gov
+ftc.gov
+europa.eu
+who.int
+un.org
+oecd.org

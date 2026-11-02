@@ -1,0 +1,12 @@
+<form class="search" method="{{ method }}" action="/search" role="search">
+  <input type="search" name="q" value="{{ query }}" autocomplete="off" autofocus placeholder="Search for...">
+  <select name="time_range" aria-label="Time range">
+{% for range in time_ranges %}<option value="{{ range.0 }}"{% if range.0 == time_range %} selected{% endif %}>{{ range.1 }}</option>{% endfor %}
+  </select>
+  <button type="submit">Search</button>
+</form>
+<nav class="tabs">
+{% for category in categories %}
+  <a href="/search?q={{ query }}&category={{ category.name }}"{% if category.selected %} class="selected"{% endif %}>{{ category.name }}</a>
+{% endfor %}
+</nav>

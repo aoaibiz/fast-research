@@ -1,0 +1,64 @@
+rustxng — NOTICE
+=====================
+
+This project is a Rust rewrite (port) of SearXNG, a free metasearch engine.
+
+Upstream work
+-------------
+  SearXNG          https://github.com/searxng/searxng
+  Licence          GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)
+  Copyright        the SearXNG authors, see
+                   https://github.com/searxng/searxng/blob/master/AUTHORS.rst
+  SearXNG itself is a fork of searx by Adam Tauber (@asciimoo).
+
+What was taken from SearXNG
+---------------------------
+Only behaviour, interfaces, configuration shapes and data were ported; no
+Python code was copied line by line. The following are derived from upstream:
+
+  * the query syntax (\`!engine\`, \`!category\`, \`:language\`, \`<timeout\`, \`!!bang\`),
+  * the result merging and scoring rules (\`searx/results.py\`),
+  * the engine settings format and the engine defaults (\`searx/settings.yml\`),
+  * the search API parameters and the response fields (\`searx/webapp.py\`),
+  * the engine request URLs, parameters and result fields
+    (\`searx/engines/*.py\`), re-implemented in Rust,
+  * the locale table (\`searx/sxng_locales.py\`, generated file),
+  * the plugin behaviours (\`searx/plugins/*.py\`).
+
+Because of that derivation this crate is distributed under the same licence,
+AGPL-3.0-or-later. If you publish a modified version — including running a
+modified instance as a network service — section 13 of the AGPL requires you
+to offer the corresponding source to its users.
+
+Third party data
+----------------
+The bundled external bang list is a reduced, hand written table; upstream ships
+a much larger compressed trie (\`searx/data/external_bangs.json\`) under the
+same licence.
+
+Third party crates
+------------------
+The Rust dependencies (axum, tokio, reqwest, serde, scraper, askama, ...) keep
+their own licences (MIT / Apache-2.0 or similar); see \`Cargo.lock\` and the
+respective crate repositories.
+
+Third-party crates
+------------------
+  Dependencies are permissive (MIT / Apache-2.0 / BSD / ISC / Zlib / Unicode).
+  Four transitive crates from the HTML/CSS stack are MPL-2.0 (file-level
+  copyleft, compatible with AGPL-3.0-or-later):
+
+    cssparser 0.31.2, cssparser-macros 0.6.1, dtoa-short 0.3.5, selectors 0.25.0
+
+  They are used unmodified through scraper; no files of these crates are
+  changed here, so no additional source-offer obligation arises from them.
+
+Using RustXNG from an MIT/Apache project
+----------------------------------------
+  RustXNG is AGPL-3.0-or-later, so code that links it inherits AGPL.
+  Running it as a separate program (spawning the binary, or talking to its
+  HTTP API on 127.0.0.1) keeps the caller under its own licence; this is how
+  rustdsh (MIT) integrates it.
+
+  AGPL section 13: if you run a modified RustXNG as a network service, users
+  interacting with it must be offered the corresponding source.

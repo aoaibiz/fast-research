@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: セキュリティ上の問題
+    url: https://github.com/aoaibiz/fast-research/blob/main/SECURITY.md
+    about: 脆弱性は Issue ではなく SECURITY.md の手順で報告してください
+  - name: 移植状況の確認
+    url: https://github.com/aoaibiz/fast-research/blob/main/docs/COVERAGE.md
+    about: 未移植のエンジン・機能の一覧

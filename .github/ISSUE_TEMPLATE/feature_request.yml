@@ -1,0 +1,37 @@
+name: Feature request
+description: 機能提案・移植の要望
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        上流 SearXNG の機能の移植要望は、対応状況を docs/PORTING.md と docs/COVERAGE.md で確認してから作成してください。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 解決したい課題
+      description: どのような場面で困っているか
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案する解決策
+      description: 設定項目・API・エンジン追加など、具体的に
+    validations:
+      required: true
+  - type: input
+    id: upstream
+    attributes:
+      label: 上流の対応物
+      description: SearXNG の該当ファイルや設定キーがあれば（例: searx/engines/qwant.py）
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: 対象範囲
+      options:
+        - label: エンジンの追加・修正
+        - label: HTTP API / 出力形式
+        - label: UI / テンプレート
+        - label: 設定・運用（キャッシュ、レート制限など）
+        - label: ドキュメント

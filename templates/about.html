@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About — {{ instance_name }}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1><a href="/">{{ instance_name }}</a></h1>
+  <nav><a href="/">Search</a><a href="/preferences">Preferences</a><a href="/stats">Stats</a></nav>
+</header>
+<h2>About</h2>
+<p>{{ instance_name }} {{ version }} is a Rust rewrite of
+<a href="https://github.com/searxng/searxng">SearXNG</a>, distributed under the
+<a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0-or-later</a> licence.</p>
+<p>Base URL: <code>{{ base_url }}</code></p>
+{% if settings_path != "" %}<p>Settings file: <code>{{ settings_path }}</code></p>{% endif %}
+
+<h3>Engines ({{ engine_count }})</h3>
+<table>
+  <tr><th>Engine</th><th>Shortcut</th><th>Categories</th></tr>
+{% for engine in engines %}
+  <tr><td>{{ engine.name }}</td><td>!{{ engine.shortcut }}</td><td>{{ engine.categories|join(", ") }}</td></tr>
+{% endfor %}
+</table>
+
+<h3>Plugins</h3>
+<ul>
+{% for plugin in plugins %}<li><strong>{{ plugin.name }}</strong> — {{ plugin.description }}</li>{% endfor %}
+</ul>
+
+<h3>Search syntax</h3>
+<ul>
+  <li><code>!engine</code> or <code>!shortcut</code> — search one engine</li>
+  <li><code>!category</code> — search a whole category</li>
+  <li><code>!!</code> — redirect to the first result</li>
+  <li><code>!!bang</code> — hand the query over to another service</li>
+  <li><code>:language</code> — force a language (<code>:ja</code>, <code>:japanese</code>)</li>
+  <li><code>&lt;3</code> — limit the search to 3 seconds (<code>&lt;850</code> = 850 ms)</li>
+</ul>
+<footer><p>rustxng is based on SearXNG and keeps its AGPL-3.0-or-later licence.</p></footer>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stats — {{ instance_name }}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1><a href="/">{{ instance_name }}</a></h1>
+  <nav><a href="/">Search</a><a href="/preferences">Preferences</a><a href="/about">About</a></nav>
+</header>
+<h2>Statistics</h2>
+<table>
+  <tr><th>Uptime</th><td>{{ metrics.uptime }}</td></tr>
+  <tr><th>Searches</th><td>{{ metrics.searches }}</td></tr>
+  <tr><th>Engine requests</th><td>{{ metrics.engine_requests }}</td></tr>
+  <tr><th>Engine errors</th><td>{{ metrics.engine_errors }}</td></tr>
+  <tr><th>Engine timeouts</th><td>{{ metrics.engine_timeouts }}</td></tr>
+  <tr><th>Results served</th><td>{{ metrics.results }}</td></tr>
+  <tr><th>Cache hits</th><td>{{ metrics.cache_hits }}</td></tr>
+  <tr><th>Cache entries</th><td>{{ cache.entries }} ({{ cache.bytes }} bytes, {{ cache.hit }} hits / {{ cache.miss }} misses)</td></tr>
+</table>
+
+<h3>Engines</h3>
+{% if has_engines %}
+<table>
+  <tr><th>Engine</th><th>Requests</th><th>Results</th><th>Errors</th><th>Average</th><th>Suspended</th></tr>
+{% for engine in engines %}
+  <tr>
+    <td>{{ engine.engine }}</td>
+    <td>{{ engine.stats.requests }}</td>
+    <td>{{ engine.stats.results }}</td>
+    <td>{{ engine.stats.errors }}</td>
+    <td>{{ engine.stats.total_time }}</td>
+    <td>{% if engine.suspended %}yes{% else %}no{% endif %}</td>
+  </tr>
+{% endfor %}
+</table>
+{% else %}
+<p>No engine has been used yet.</p>
+{% endif %}
+<footer><p>{{ instance_name }} {{ version }} — metrics are only kept in memory.</p></footer>
+</body>
+</html>

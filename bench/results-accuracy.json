@@ -1,0 +1,186 @@
+{
+  "a": "http://127.0.0.1:8899",
+  "b": "http://127.0.0.1:8001",
+  "engines": {
+    "pubmed": {
+      "a": {
+        "n": 8,
+        "mean": 1324.0,
+        "median": 1298.6,
+        "p95": 2408.1,
+        "max": 2408.1
+      },
+      "b": {
+        "n": 8,
+        "mean": 1373.1,
+        "median": 1423.3,
+        "p95": 1670.3,
+        "max": 1670.3
+      },
+      "overlap_at_10": 1.0,
+      "top1_agreement": 0.875,
+      "found_a": 0.875,
+      "found_b": 0.875,
+      "errors": []
+    },
+    "npm": {
+      "a": {
+        "n": 8,
+        "mean": 374.6,
+        "median": 323.3,
+        "p95": 612.1,
+        "max": 612.1
+      },
+      "b": {
+        "n": 8,
+        "mean": 415.0,
+        "median": 332.8,
+        "p95": 712.4,
+        "max": 712.4
+      },
+      "overlap_at_10": 1.0,
+      "top1_agreement": 0.5,
+      "found_a": 0.5,
+      "found_b": 0.5,
+      "errors": []
+    },
+    "stack overflow": {
+      "a": {
+        "n": 8,
+        "mean": 223.5,
+        "median": 216.6,
+        "p95": 272.8,
+        "max": 272.8
+      },
+      "b": {
+        "n": 8,
+        "mean": 252.9,
+        "median": 203.5,
+        "p95": 562.4,
+        "max": 562.4
+      },
+      "overlap_at_10": 1.0,
+      "top1_agreement": 1.0,
+      "found_a": 1.0,
+      "found_b": 1.0,
+      "errors": []
+    },
+    "arxiv": {
+      "a": {
+        "n": 8,
+        "mean": 26.5,
+        "median": 15.8,
+        "p95": 67.1,
+        "max": 67.1
+      },
+      "b": {
+        "n": 8,
+        "mean": 42.2,
+        "median": 22.3,
+        "p95": 135.7,
+        "max": 135.7
+      },
+      "overlap_at_10": 1.0,
+      "top1_agreement": 1.0,
+      "found_a": 1.0,
+      "found_b": 1.0,
+      "errors": []
+    },
+    "github": {
+      "a": {
+        "n": 8,
+        "mean": 1275.4,
+        "median": 1211.7,
+        "p95": 1972.3,
+        "max": 1972.3
+      },
+      "b": {
+        "n": 8,
+        "mean": 965.1,
+        "median": 948.5,
+        "p95": 1105.8,
+        "max": 1105.8
+      },
+      "overlap_at_10": 1.0,
+      "top1_agreement": 1.0,
+      "found_a": 1.0,
+      "found_b": 1.0,
+      "errors": []
+    },
+    "crates.io": {
+      "a": {
+        "n": 8,
+        "mean": 720.2,
+        "median": 721.3,
+        "p95": 791.1,
+        "max": 791.1
+      },
+      "b": {
+        "n": 8,
+        "mean": 733.2,
+        "median": 724.1,
+        "p95": 845.3,
+        "max": 845.3
+      },
+      "overlap_at_10": 1.0,
+      "top1_agreement": 1.0,
+      "found_a": 1.0,
+      "found_b": 1.0,
+      "errors": []
+    },
+    "docker hub": {
+      "a": {
+        "n": 8,
+        "mean": 286.2,
+        "median": 260.7,
+        "p95": 363.3,
+        "max": 363.3
+      },
+      "b": {
+        "n": 8,
+        "mean": 277.4,
+        "median": 269.4,
+        "p95": 351.1,
+        "max": 351.1
+      },
+      "overlap_at_10": 0.977,
+      "top1_agreement": 1.0,
+      "found_a": 1.0,
+      "found_b": 1.0,
+      "errors": []
+    },
+    "bing": {
+      "a": {
+        "n": 8,
+        "mean": 135.2,
+        "median": 130.4,
+        "p95": 182.3,
+        "max": 182.3
+      },
+      "b": {
+        "n": 8,
+        "mean": 146.4,
+        "median": 128.0,
+        "p95": 289.6,
+        "max": 289.6
+      },
+      "overlap_at_10": 0.875,
+      "top1_agreement": 0.5,
+      "found_a": 0.625,
+      "found_b": 0.5,
+      "errors": []
+    }
+  },
+  "queries": [
+    "rust programming language",
+    "large language models",
+    "openstreetmap berlin",
+    "tokio async runtime",
+    "climate change arctic",
+    "nlp transformers",
+    "linux kernel scheduler",
+    "quantum computing"
+  ],
+  "repeats": 1,
+  "delay": 0.8
+}

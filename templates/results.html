@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ query }} — {{ instance_name }}</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="{{ instance_name }}">
+</head>
+<body>
+<header>
+  <h1><a href="/">{{ instance_name }}</a></h1>
+  <nav>
+    <a href="/preferences">Preferences</a>
+    <a href="/about">About</a>
+    <a href="/stats">Stats</a>
+  </nav>
+</header>
+{% include "search_form.html" %}
+
+{% if has_answers %}
+<section class="answer">
+{% for answer in answers %}<p>{{ answer }}</p>{% endfor %}
+</section>
+{% endif %}
+
+{% if has_infoboxes %}
+{% for infobox in infoboxes %}
+<section class="infobox">
+{% if infobox.has_image %}<img class="infobox-image" src="{{ infobox.img_src }}" alt="">{% endif %}
+<h2>{{ infobox.title }}</h2>
+<p>{{ infobox.content }}</p>
+{% for attribute in infobox.attributes %}<p><strong>{{ attribute.0 }}</strong>: {{ attribute.1 }}</p>{% endfor %}
+{% for link in infobox.urls %}<a href="{{ link.1 }}">{{ link.0 }}</a> {% endfor %}
+</section>
+{% endfor %}
+{% endif %}
+
+{% if has_corrections %}
+<section class="correction"><p>Did you mean
+{% for correction in corrections %}<a href="/search?q={{ correction }}">{{ correction }}</a> {% endfor %}
+?</p></section>
+{% endif %}
+
+{% if has_suggestions %}
+<section class="correction"><p>Suggestions:
+{% for suggestion in suggestions %}<a href="/search?q={{ suggestion }}">{{ suggestion }}</a> {% endfor %}
+</p></section>
+{% endif %}
+
+{% if has_results %}
+<ul class="results">
+{% for result in results %}
+  <li>
+{% if result.template == "keyvalue" %}
+    <div class="result-title">{{ result.title }}</div>
+    <table class="result-keyvalue">
+{% for pair in result.metadata %}{% if pair.0 != "valkey_key" %}
+      <tr><th>{{ pair.0 }}</th><td>{{ pair.1 }}</td></tr>
+{% endif %}{% endfor %}
+    </table>
+{% else %}
+    <a class="result-title" href="{{ result.url }}">{{ result.title }}</a>
+    <div class="result-url">{{ result.pretty_url }}</div>
+{% endif %}
+{% if result.has_image %}<p><img src="{% if result.img_src_proxy != "" %}{{ result.img_src_proxy }}{% else %}{{ result.img_src }}{% endif %}" alt="{{ result.title }}" loading="lazy" style="max-height:8rem"></p>{% endif %}
+{% if result.content != "" %}<p class="result-content">{{ result.content }}</p>{% endif %}
+    <div class="result-meta">
+{% if result.published_date != "" %}<span>{{ result.published_date }}</span> · {% endif %}
+{% if result.template != "default" %}<span>{{ result.template }}</span> · {% endif %}
+      <span>{{ result.engines }}</span>
+    </div>
+  </li>
+{% endfor %}
+</ul>
+{% else %}
+<p>No results were returned for this query.</p>
+{% endif %}
+
+{% if has_prev || has_next %}
+<nav class="pagination">
+{% if has_prev %}<a href="{{ prev_url }}" rel="prev">&larr; Previous</a>{% endif %}
+<span>Page {{ pageno }}</span>
+{% if has_next %}<a href="{{ next_url }}" rel="next">Next &rarr;</a>{% endif %}
+</nav>
+{% endif %}
+
+{% if has_unresponsive %}
+<section class="unresponsive">
+  <p>Engines that did not answer:</p>
+  <ul>{% for engine in unresponsive_engines %}<li>{{ engine }}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if has_timings %}
+<details>
+  <summary>Timings</summary>
+  <table>
+    <tr><th>Engine</th><th>Time</th></tr>
+{% for timing in timings %}<tr><td>{{ timing.0 }}</td><td>{{ timing.1 }}</td></tr>{% endfor %}
+  </table>
+</details>
+{% endif %}
+
+{% if has_engine_data %}
+<details>
+  <summary>Engine data</summary>
+{% for engine in engine_data %}
+  <h3>{{ engine.0 }}</h3>
+  <table>{% for entry in engine.1 %}<tr><th>{{ entry.0 }}</th><td>{{ entry.1 }}</td></tr>{% endfor %}</table>
+{% endfor %}
+</details>
+{% endif %}
+
+{% include "autocomplete.html" %}
+<footer>
+  <p>{{ number_of_results }} merged results from {{ engine_count }} engines — {{ instance_name }} {{ version }}, AGPL-3.0-or-later.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,4 @@
+rust programming language
+large language models
+linux kernel scheduler
+quantum computing

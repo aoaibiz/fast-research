@@ -1,0 +1,927 @@
+{
+ "version": 2,
+ "description": "100 questions with gold URL prefixes for URL-quality evaluation.",
+ "queries": [
+  {
+   "id": "en-py-list",
+   "lang": "en",
+   "query": "python list methods documentation",
+   "gold": [
+    "https://docs.python.org/3/tutorial/datastructures",
+    "https://docs.python.org/3/library/stdtypes"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-py-dict",
+   "lang": "en",
+   "query": "python dict get method",
+   "gold": [
+    "https://docs.python.org/3/library/stdtypes"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-py-asyncio",
+   "lang": "en",
+   "query": "python asyncio documentation",
+   "gold": [
+    "https://docs.python.org/3/library/asyncio"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-py-re",
+   "lang": "en",
+   "query": "python re module regular expressions",
+   "gold": [
+    "https://docs.python.org/3/library/re"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-py-typing",
+   "lang": "en",
+   "query": "python typing generics",
+   "gold": [
+    "https://docs.python.org/3/library/typing"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-rs-book",
+   "lang": "en",
+   "query": "rust programming language book",
+   "gold": [
+    "https://doc.rust-lang.org/book"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-rs-vec",
+   "lang": "en",
+   "query": "rust vector documentation",
+   "gold": [
+    "https://doc.rust-lang.org/std/vec"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-rs-trait",
+   "lang": "en",
+   "query": "rust traits documentation",
+   "gold": [
+    "https://doc.rust-lang.org/book/ch10-02-traits.html"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-rs-result",
+   "lang": "en",
+   "query": "rust result enum documentation",
+   "gold": [
+    "https://doc.rust-lang.org/std/result"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-rs-cargo",
+   "lang": "en",
+   "query": "cargo book manifest format",
+   "gold": [
+    "https://doc.rust-lang.org/cargo/reference/manifest"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-docker-compose",
+   "lang": "en",
+   "query": "docker compose file reference",
+   "gold": [
+    "https://docs.docker.com/reference/compose-file",
+    "https://docs.docker.com/compose/compose-file"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-docker-build",
+   "lang": "en",
+   "query": "dockerfile reference build",
+   "gold": [
+    "https://docs.docker.com/reference/dockerfile"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-docker-run",
+   "lang": "en",
+   "query": "docker run command reference",
+   "gold": [
+    "https://docs.docker.com/reference/cli/docker/container/run"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-pg-json",
+   "lang": "en",
+   "query": "postgresql json functions",
+   "gold": [
+    "https://www.postgresql.org/docs/current/functions-json",
+    "https://www.postgresql.org/docs/current/datatype-json"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-pg-index",
+   "lang": "en",
+   "query": "postgresql create index documentation",
+   "gold": [
+    "https://www.postgresql.org/docs/current/sql-createindex"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-pg-window",
+   "lang": "en",
+   "query": "postgresql window functions",
+   "gold": [
+    "https://www.postgresql.org/docs/current/tutorial-window",
+    "https://www.postgresql.org/docs/current/functions-window"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-numpy-index",
+   "lang": "en",
+   "query": "numpy indexing arrays",
+   "gold": [
+    "https://numpy.org/doc/stable/user/basics.indexing"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-numpy-broadcast",
+   "lang": "en",
+   "query": "numpy broadcasting rules",
+   "gold": [
+    "https://numpy.org/doc/stable/user/basics.broadcasting"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-react-hooks",
+   "lang": "en",
+   "query": "react hooks reference",
+   "gold": [
+    "https://react.dev/reference/react"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-react-usestate",
+   "lang": "en",
+   "query": "react usestate hook",
+   "gold": [
+    "https://react.dev/reference/react/useState"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-mdn-array",
+   "lang": "en",
+   "query": "mdn javascript array",
+   "gold": [
+    "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-mdn-fetch",
+   "lang": "en",
+   "query": "mdn fetch api",
+   "gold": [
+    "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-mdn-promise",
+   "lang": "en",
+   "query": "mdn promise javascript",
+   "gold": [
+    "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-k8s-pod",
+   "lang": "en",
+   "query": "kubernetes pod documentation",
+   "gold": [
+    "https://kubernetes.io/docs/concepts/workloads/pods"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-k8s-deploy",
+   "lang": "en",
+   "query": "kubernetes deployment documentation",
+   "gold": [
+    "https://kubernetes.io/docs/concepts/workloads/controllers/deployment"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-git-rebase",
+   "lang": "en",
+   "query": "git rebase documentation",
+   "gold": [
+    "https://git-scm.com/docs/git-rebase"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-git-merge",
+   "lang": "en",
+   "query": "git merge documentation",
+   "gold": [
+    "https://git-scm.com/docs/git-merge"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-nginx-conf",
+   "lang": "en",
+   "query": "nginx configuration file reference",
+   "gold": [
+    "https://nginx.org/en/docs",
+    "https://docs.nginx.com/nginx/admin-guide"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-linux-sched",
+   "lang": "en",
+   "query": "linux kernel documentation scheduler",
+   "gold": [
+    "https://docs.kernel.org/scheduler"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-linux-sysctl",
+   "lang": "en",
+   "query": "linux kernel sysctl documentation",
+   "gold": [
+    "https://docs.kernel.org/admin-guide/sysctl"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-sql-join",
+   "lang": "en",
+   "query": "sql join types tutorial",
+   "gold": [
+    "https://www.postgresql.org/docs/current/queries-table-expressions"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-tokio",
+   "lang": "en",
+   "query": "tokio rust async runtime",
+   "gold": [
+    "https://tokio.rs"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-serde",
+   "lang": "en",
+   "query": "serde rust crate serialization",
+   "gold": [
+    "https://serde.rs",
+    "https://crates.io/crates/serde"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-fastapi",
+   "lang": "en",
+   "query": "fastapi documentation tutorial",
+   "gold": [
+    "https://fastapi.tiangolo.com"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-django-orm",
+   "lang": "en",
+   "query": "django queryset documentation",
+   "gold": [
+    "https://docs.djangoproject.com/en/stable/topics/db/queries"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-flask",
+   "lang": "en",
+   "query": "flask quickstart documentation",
+   "gold": [
+    "https://flask.palletsprojects.com/en/stable/quickstart"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-rfc-http",
+   "lang": "en",
+   "query": "http semantics rfc 9110",
+   "gold": [
+    "https://www.rfc-editor.org/rfc/rfc9110"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-json-schema",
+   "lang": "en",
+   "query": "json schema specification",
+   "gold": [
+    "https://json-schema.org/specification"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-oauth",
+   "lang": "en",
+   "query": "oauth 2.0 rfc 6749",
+   "gold": [
+    "https://www.rfc-editor.org/rfc/rfc6749"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-unix-man",
+   "lang": "en",
+   "query": "unix find command manual",
+   "gold": [
+    "https://man7.org/linux/man-pages/man1/find.1"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "en-turing",
+   "lang": "en",
+   "query": "alan turing wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Alan_Turing"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-shakespeare",
+   "lang": "en",
+   "query": "william shakespeare wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/William_Shakespeare"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-einstein",
+   "lang": "en",
+   "query": "albert einstein wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Albert_Einstein"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-rust-topic",
+   "lang": "en",
+   "query": "rust programming language wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Rust_(programming_language)"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-transformer",
+   "lang": "en",
+   "query": "transformer deep learning wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Transformer_(deep_learning_architecture)",
+    "https://en.wikipedia.org/wiki/Transformer_(machine_learning_model)"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-mt-fuji",
+   "lang": "en",
+   "query": "mount fuji wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Mount_Fuji"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-amazon-river",
+   "lang": "en",
+   "query": "amazon river wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Amazon_River"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-tokyo",
+   "lang": "en",
+   "query": "tokyo wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Tokyo"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-black-hole",
+   "lang": "en",
+   "query": "black hole wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Black_hole"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-internet",
+   "lang": "en",
+   "query": "internet wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Internet"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-photosynthesis",
+   "lang": "en",
+   "query": "photosynthesis wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Photosynthesis"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-roman-empire",
+   "lang": "en",
+   "query": "roman empire wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Roman_Empire"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-tcp-ip",
+   "lang": "en",
+   "query": "tcp ip wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Internet_protocol_suite"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-ml",
+   "lang": "en",
+   "query": "machine learning wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Machine_learning"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-relativity",
+   "lang": "en",
+   "query": "theory of relativity wikipedia",
+   "gold": [
+    "https://en.wikipedia.org/wiki/Theory_of_relativity"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "en-attention",
+   "lang": "en",
+   "query": "attention is all you need arxiv",
+   "gold": [
+    "https://arxiv.org/abs/1706.03762"
+   ],
+   "category": "paper"
+  },
+  {
+   "id": "en-bert",
+   "lang": "en",
+   "query": "bert pre-training arxiv",
+   "gold": [
+    "https://arxiv.org/abs/1810.04805"
+   ],
+   "category": "paper"
+  },
+  {
+   "id": "en-gpt3",
+   "lang": "en",
+   "query": "language models are few shot learners arxiv",
+   "gold": [
+    "https://arxiv.org/abs/2005.14165"
+   ],
+   "category": "paper"
+  },
+  {
+   "id": "en-resnet",
+   "lang": "en",
+   "query": "deep residual learning arxiv",
+   "gold": [
+    "https://arxiv.org/abs/1512.03385"
+   ],
+   "category": "paper"
+  },
+  {
+   "id": "en-adam",
+   "lang": "en",
+   "query": "adam optimizer arxiv",
+   "gold": [
+    "https://arxiv.org/abs/1412.6980"
+   ],
+   "category": "paper"
+  },
+  {
+   "id": "en-rust-repo",
+   "lang": "en",
+   "query": "rust-lang rust github",
+   "gold": [
+    "https://github.com/rust-lang/rust"
+   ],
+   "category": "repo"
+  },
+  {
+   "id": "en-tokio-repo",
+   "lang": "en",
+   "query": "tokio-rs tokio github",
+   "gold": [
+    "https://github.com/tokio-rs/tokio"
+   ],
+   "category": "repo"
+  },
+  {
+   "id": "en-ripgrep",
+   "lang": "en",
+   "query": "burntsushi ripgrep github",
+   "gold": [
+    "https://github.com/BurntSushi/ripgrep"
+   ],
+   "category": "repo"
+  },
+  {
+   "id": "en-crates-serde",
+   "lang": "en",
+   "query": "crates.io serde crate",
+   "gold": [
+    "https://crates.io/crates/serde"
+   ],
+   "category": "repo"
+  },
+  {
+   "id": "en-npm-react",
+   "lang": "en",
+   "query": "npm react package",
+   "gold": [
+    "https://www.npmjs.com/package/react"
+   ],
+   "category": "repo"
+  },
+  {
+   "id": "ja-fuji",
+   "lang": "ja",
+   "query": "富士山 wikipedia",
+   "gold": [
+    "https://ja.wikipedia.org/wiki/富士山"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "ja-genji",
+   "lang": "ja",
+   "query": "源氏物語 wikipedia",
+   "gold": [
+    "https://ja.wikipedia.org/wiki/源氏物語"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "ja-tokyo-station",
+   "lang": "ja",
+   "query": "東京駅 wikipedia",
+   "gold": [
+    "https://ja.wikipedia.org/wiki/東京駅"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "ja-momotaro",
+   "lang": "ja",
+   "query": "桃太郎 wikipedia",
+   "gold": [
+    "https://ja.wikipedia.org/wiki/桃太郎"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "ja-basho",
+   "lang": "ja",
+   "query": "松尾芭蕉 wikipedia",
+   "gold": [
+    "https://ja.wikipedia.org/wiki/松尾芭蕉"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "ja-soseki",
+   "lang": "ja",
+   "query": "夏目漱石 wikipedia",
+   "gold": [
+    "https://ja.wikipedia.org/wiki/夏目漱石"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "ja-fuji-san",
+   "lang": "ja",
+   "query": "富士山 標高",
+   "gold": [
+    "https://ja.wikipedia.org/wiki/富士山"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "ja-tokaido",
+   "lang": "ja",
+   "query": "東海道新幹線 wikipedia",
+   "gold": [
+    "https://ja.wikipedia.org/wiki/東海道新幹線"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "ja-kimono",
+   "lang": "ja",
+   "query": "着物 wikipedia",
+   "gold": [
+    "https://ja.wikipedia.org/wiki/着物"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "ja-sushi",
+   "lang": "ja",
+   "query": "寿司 wikipedia",
+   "gold": [
+    "https://ja.wikipedia.org/wiki/寿司"
+   ],
+   "category": "wiki"
+  },
+  {
+   "id": "ja-py-doc",
+   "lang": "ja",
+   "query": "python 入門 公式",
+   "gold": [
+    "https://docs.python.org/ja/3/tutorial"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-py-lib",
+   "lang": "ja",
+   "query": "python 標準ライブラリ 日本語",
+   "gold": [
+    "https://docs.python.org/ja/3/library"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-rs-doc",
+   "lang": "ja",
+   "query": "rust プログラミング言語 公式",
+   "gold": [
+    "https://rust-lang.org/ja",
+    "https://www.rust-lang.org/ja",
+    "https://doc.rust-lang.org/ja",
+    "https://rust-jp.rs",
+    "https://doc.rust-lang.org/book/"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-rs-book",
+   "lang": "ja",
+   "query": "rust 日本語 ドキュメント",
+   "gold": [
+    "https://doc.rust-lang.org/book/",
+    "https://rust-lang.org/ja",
+    "https://www.rust-lang.org/ja",
+    "https://rust-jp.rs"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-mdn",
+   "lang": "ja",
+   "query": "mdn javascript 配列",
+   "gold": [
+    "https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-nginx",
+   "lang": "ja",
+   "query": "nginx 設定 ドキュメント",
+   "gold": [
+    "https://nginx.org/en/docs"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-docker",
+   "lang": "ja",
+   "query": "docker compose ファイル リファレンス",
+   "gold": [
+    "https://docs.docker.com/reference/compose-file"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-jma",
+   "lang": "ja",
+   "query": "気象庁 天気予報",
+   "gold": [
+    "https://www.jma.go.jp"
+   ],
+   "category": "official"
+  },
+  {
+   "id": "ja-ndl",
+   "lang": "ja",
+   "query": "国立国会図書館 サーチ",
+   "gold": [
+    "https://ndlsearch.ndl.go.jp"
+   ],
+   "category": "official"
+  },
+  {
+   "id": "ja-tokyo-tourism",
+   "lang": "ja",
+   "query": "東京 観光 公式",
+   "gold": [
+    "https://www.gotokyo.org"
+   ],
+   "category": "official"
+  },
+  {
+   "id": "ja-jr",
+   "lang": "ja",
+   "query": "JR東日本 時刻表",
+   "gold": [
+    "https://www.jreast.co.jp"
+   ],
+   "category": "official"
+  },
+  {
+   "id": "ja-gsi",
+   "lang": "ja",
+   "query": "国土地理院 地図",
+   "gold": [
+    "https://www.gsi.go.jp",
+    "https://maps.gsi.go.jp"
+   ],
+   "category": "official"
+  },
+  {
+   "id": "ja-e-gov",
+   "lang": "ja",
+   "query": "e-Gov 法令検索",
+   "gold": [
+    "https://elaws.e-gov.go.jp"
+   ],
+   "category": "official"
+  },
+  {
+   "id": "ja-python-org",
+   "lang": "ja",
+   "query": "python japan ユーザー会",
+   "gold": [
+    "https://www.python.jp"
+   ],
+   "category": "official"
+  },
+  {
+   "id": "ja-rust-jp",
+   "lang": "ja",
+   "query": "rust japan ユーザー会",
+   "gold": [
+    "https://rust-jp.rs",
+    "https://www.rust-lang.org/ja"
+   ],
+   "category": "official"
+  },
+  {
+   "id": "ja-rust-crate",
+   "lang": "ja",
+   "query": "rust crates.io 使い方",
+   "gold": [
+    "https://crates.io",
+    "https://lib.rs",
+    "https://doc.rust-lang.org/cargo/"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-git-doc",
+   "lang": "ja",
+   "query": "git rebase 使い方 公式",
+   "gold": [
+    "https://git-scm.com/docs/git-rebase"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-sql",
+   "lang": "ja",
+   "query": "postgresql 日本語 ドキュメント",
+   "gold": [
+    "https://www.postgresql.jp/document",
+    "https://www.postgresql.org/docs"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-linux",
+   "lang": "ja",
+   "query": "linux kernel ドキュメント",
+   "gold": [
+    "https://docs.kernel.org"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-aws",
+   "lang": "ja",
+   "query": "aws ec2 ドキュメント",
+   "gold": [
+    "https://docs.aws.amazon.com",
+    "https://aws.amazon.com/jp/documentation"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-gcp",
+   "lang": "ja",
+   "query": "google cloud ドキュメント",
+   "gold": [
+    "https://cloud.google.com/docs"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-mdn-js",
+   "lang": "ja",
+   "query": "mdn javascript 入門",
+   "gold": [
+    "https://developer.mozilla.org/ja/docs/Web/JavaScript"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-react",
+   "lang": "ja",
+   "query": "react 公式 ドキュメント",
+   "gold": [
+    "https://ja.react.dev",
+    "https://react.dev"
+   ],
+   "category": "doc"
+  },
+  {
+   "id": "ja-docker-hub",
+   "lang": "ja",
+   "query": "docker hub 公式",
+   "gold": [
+    "https://hub.docker.com"
+   ],
+   "category": "official"
+  },
+  {
+   "id": "ja-npm",
+   "lang": "ja",
+   "query": "npm 公式 パッケージ",
+   "gold": [
+    "https://www.npmjs.com"
+   ],
+   "category": "official"
+  }
+ ]
+}

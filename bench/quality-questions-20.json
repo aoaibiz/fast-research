@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "description": "Hand curated questions with a gold URL prefix. Used to measure recall@k and latency of the RustXNG search API.",
+  "queries": [
+    {
+      "id": "en-tokio",
+      "lang": "en",
+      "query": "tokio rust async runtime",
+      "gold": [
+        "https://tokio.rs"
+      ]
+    },
+    {
+      "id": "en-rust-book",
+      "lang": "en",
+      "query": "rust programming language book",
+      "gold": [
+        "https://doc.rust-lang.org/book"
+      ]
+    },
+    {
+      "id": "en-asyncio",
+      "lang": "en",
+      "query": "python asyncio documentation",
+      "gold": [
+        "https://docs.python.org/3/library/asyncio"
+      ]
+    },
+    {
+      "id": "en-pg-json",
+      "lang": "en",
+      "query": "postgresql json functions",
+      "gold": [
+        "https://www.postgresql.org/docs/current/functions-json",
+        "https://www.postgresql.org/docs/current/datatype-json"
+      ]
+    },
+    {
+      "id": "en-attention",
+      "lang": "en",
+      "query": "attention is all you need arxiv",
+      "gold": [
+        "https://arxiv.org/abs/1706.03762"
+      ]
+    },
+    {
+      "id": "en-turing",
+      "lang": "en",
+      "query": "alan turing wikipedia",
+      "gold": [
+        "https://en.wikipedia.org/wiki/Alan_Turing"
+      ]
+    },
+    {
+      "id": "en-rust-repo",
+      "lang": "en",
+      "query": "rust-lang rust github",
+      "gold": [
+        "https://github.com/rust-lang/rust"
+      ]
+    },
+    {
+      "id": "en-compose",
+      "lang": "en",
+      "query": "docker compose file reference",
+      "gold": [
+        "https://docs.docker.com/reference/compose-file",
+        "https://docs.docker.com/compose/compose-file"
+      ]
+    },
+    {
+      "id": "en-numpy",
+      "lang": "en",
+      "query": "numpy indexing arrays",
+      "gold": [
+        "https://numpy.org/doc/stable/user/basics.indexing"
+      ]
+    },
+    {
+      "id": "en-serde",
+      "lang": "en",
+      "query": "serde rust crate serialization",
+      "gold": [
+        "https://serde.rs",
+        "https://crates.io/crates/serde"
+      ]
+    },
+    {
+      "id": "en-kernel",
+      "lang": "en",
+      "query": "linux kernel documentation scheduler",
+      "gold": [
+        "https://docs.kernel.org/scheduler"
+      ]
+    },
+    {
+      "id": "en-mdn-array",
+      "lang": "en",
+      "query": "mdn javascript array",
+      "gold": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array"
+      ]
+    },
+    {
+      "id": "ja-fuji",
+      "lang": "ja",
+      "query": "富士山 wikipedia",
+      "gold": [
+        "https://ja.wikipedia.org/wiki/富士山"
+      ]
+    },
+    {
+      "id": "ja-genji",
+      "lang": "ja",
+      "query": "源氏物語 wikipedia",
+      "gold": [
+        "https://ja.wikipedia.org/wiki/源氏物語"
+      ]
+    },
+    {
+      "id": "ja-tokyo-station",
+      "lang": "ja",
+      "query": "東京駅 wikipedia",
+      "gold": [
+        "https://ja.wikipedia.org/wiki/東京駅"
+      ]
+    },
+    {
+      "id": "ja-python",
+      "lang": "ja",
+      "query": "python 入門 公式",
+      "gold": [
+        "https://docs.python.org/ja/3/tutorial"
+      ]
+    },
+    {
+      "id": "ja-rust",
+      "lang": "ja",
+      "query": "rust プログラミング言語 公式",
+      "gold": [
+        "https://www.rust-lang.org/ja",
+        "https://doc.rust-lang.org/ja",
+        "https://prev.rust-lang.org/ja-JP",
+        "https://rust-jp.rs"
+      ]
+    },
+    {
+      "id": "ja-jma",
+      "lang": "ja",
+      "query": "気象庁 天気予報",
+      "gold": [
+        "https://www.jma.go.jp"
+      ]
+    },
+    {
+      "id": "ja-ndl",
+      "lang": "ja",
+      "query": "国立国会図書館 サーチ",
+      "gold": [
+        "https://ndlsearch.ndl.go.jp"
+      ]
+    },
+    {
+      "id": "ja-tokyo-tourism",
+      "lang": "ja",
+      "query": "東京 観光 公式",
+      "gold": [
+        "https://www.gotokyo.org"
+      ]
+    }
+  ]
+}

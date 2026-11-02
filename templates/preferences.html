@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preferences — {{ instance_name }}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1><a href="/">{{ instance_name }}</a></h1>
+  <nav><a href="/">Search</a><a href="/about">About</a><a href="/stats">Stats</a></nav>
+</header>
+<h2>Preferences</h2>
+<form method="post" action="/preferences">
+  <section>
+    <h3>Search</h3>
+    <p>
+      <label>Language
+        <select name="language">
+{% for option in languages %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Interface locale
+        <select name="locale">
+{% for option in locales %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}
+        </select>
+      </label>
+    </p>
+    <p>
+      <label>Safe search
+        <select name="safesearch">
+{% for option in safesearch_options %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Autocomplete
+        <select name="autocomplete">
+{% for option in autocomplete_options %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Search method
+        <select name="method">
+{% for option in method_options %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Theme
+        <select name="theme">
+{% for option in themes %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Maximum pages (0 = unlimited)
+        <input type="number" name="max_page" min="0" value="{{ preferences.max_page }}">
+      </label>
+      <label><input type="checkbox" name="image_proxy"{% if preferences.image_proxy %} checked{% endif %}> Proxy image results</label>
+    </p>
+  </section>
+  <section>
+    <h3>Categories</h3>
+{% for category in categories %}
+    <label><input type="checkbox" name="category" value="{{ category.name }}"{% if category.selected %} checked{% endif %}> {{ category.name }}</label>
+{% endfor %}
+  </section>
+  <section>
+    <h3>Engines</h3>
+    <p>Disabled engines: <code>{{ disabled_engines }}</code></p>
+    <div class="engines">
+{% for engine in engines %}
+      <label><input type="checkbox" name="enabled_engine" value="{{ engine.name }}"{% if engine.enabled %} checked{% endif %}> {{ engine.name }}{% if engine.shortcut != "" %} <code>!{{ engine.shortcut }}</code>{% endif %}</label>
+{% endfor %}
+    </div>
+  </section>
+  <section>
+    <h3>Plugins</h3>
+{% for plugin in plugins %}
+    <label><input type="checkbox" name="enabled_plugin" value="{{ plugin.id }}"{% if plugin.enabled %} checked{% endif %}> {{ plugin.name }}</label>
+    <p class="result-meta">{{ plugin.description }}</p>
+{% endfor %}
+  </section>
+  <p>
+    <button type="submit" name="action" value="save">Save</button>
+    <button type="submit" name="action" value="reset">Reset to defaults</button>
+  </p>
+</form>
+<footer><p>{{ instance_name }} {{ version }}</p></footer>
+</body>
+</html>

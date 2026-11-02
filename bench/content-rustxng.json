@@ -1,0 +1,1145 @@
+{
+ "source": "rustxng",
+ "queries": [
+  {
+   "id": "en-tokio",
+   "query": "tokio rust async runtime",
+   "gold_url": "https://tokio.rs",
+   "results": [
+    {
+     "url": "http://tokio.rs/tokio/tutorial/async",
+     "title": "Async in depth | Tokio - An asynchronous Rust runtime",
+     "content": "At this point, we have completed a fairly comprehensive tour of asynchronous Rust and Tokio . Now we will dig deeper into Rust 's asynchronous runtime model. At the very beginning of the tutorial, we hinted that asynchronous Rust takes a unique approach. Now, we explain what that means. As a quick review, let's take a very basic asynchronous function. This is nothing new compared to what the tutorial has covered so far. We call the function and it returns some value. We call .await on that value. ...."
+    },
+    {
+     "url": "https://tokio.rs/",
+     "title": "Tokio - An asynchronous Rust runtime",
+     "content": "Tokio is a runtime for writing reliable asynchronous applications with Rust . It provides async I/O, networking, scheduling, timers, and more."
+    },
+    {
+     "url": "http://tokio.rs/tokio/tutorial",
+     "title": "Tutorial | Tokio - An asynchronous Rust runtime",
+     "content": "Tokio is an asynchronous runtime for the Rust programming language. It provides the building blocks needed for writing networking applications. It gives t…"
+    },
+    {
+     "url": "https://news.ycombinator.com/item?id=25520353",
+     "title": "Tokio 1.0 – async runtime for Rust | Hacker News",
+     "content": "I don't really get these modern async APIs. In languages like Javascript I thought they only made sense because JS interpreters are (historically) single-threaded, so you really have no choice but async to express some concepts. Fine. But in Rust you can just spawn threads, share data through channels or mutexes, use OS-provided async IO primitives to poll file descriptors and do event-driven programming etc... I tried looking into Tokio a little while ago and I found that it led to some incredi...."
+    },
+    {
+     "url": "http://tokio.rs/tokio/topics",
+     "title": "Topics | Tokio - An asynchronous Rust runtime",
+     "content": "Tokio is a runtime for writing reliable asynchronous applications with Rust. It provides async I/O, networking, scheduling, timers, and more."
+    },
+    {
+     "url": "https://tokio.rs/tokio/tutorial/select",
+     "title": "Select | Tokio - An asynchronous Rust runtime",
+     "content": "Tokio is a runtime for writing reliable asynchronous applications with Rust . It provides async I/O, networking, scheduling, timers, and more."
+    },
+    {
+     "url": "https://news.ycombinator.com/item?id=32119002",
+     "title": "Async Rust: What is a runtime? how Tokio works under the ...",
+     "content": "Each runtime would provide a set of FDs that they want to monitor, and a function to execute a single iteration of their event loop. The while(1) ..."
+    },
+    {
+     "url": "https://tokio.rs/tokio/tutorial/spawning",
+     "title": "Spawning | Tokio - An asynchronous Rust runtime",
+     "content": "Tokio is a runtime for writing reliable asynchronous applications with Rust . It provides async I/O, networking, scheduling, timers, and more."
+    },
+    {
+     "url": "https://reintech.io/blog/tokio-vs-async-std-vs-smol-rust-async-runtime-comparison-2026",
+     "title": "Tokio vs async-std vs smol: Rust Async Runtime Comparison ...",
+     "content": "Tokio has become the de facto standard for async Rust, powering major projects from Discord to AWS. It's the runtime you'll find in most ..."
+    },
+    {
+     "url": "https://oneuptime.com/blog/post/2026-02-01-rust-tokio-async-runtime/view",
+     "title": "How to Use Tokio for Async Runtime in Rust",
+     "content": "Before diving into code, let us understand what Tokio actually does. Rust has async/await syntax built into the language, but it does not include a runtime to execute async code."
+    }
+   ]
+  },
+  {
+   "id": "en-rust-book",
+   "query": "rust programming language book",
+   "gold_url": "https://doc.rust-lang.org/book",
+   "results": [
+    {
+     "url": "http://doc.rust-lang.org/book/",
+     "title": "The Rust Programming Language - The Rust Programming Language",
+     "content": "by Steve Klabnik, Carol Nichols, and Chris Krycho, with contributions from the Rust Community This version of the text assumes you’re using Rust 1.97.0 (released 2026-07-09) or later with edition = \"2024\" in the Cargo.toml file of all projects to configure them to use Rust 2024 Edition idioms. See the “Installation” section of Chapter 1 for instructions on installing or updating Rust , and see Appendix E for information on editions. The HTML format is available online at https://doc. rust -la...."
+    },
+    {
+     "url": "https://rust-book.cs.brown.edu/",
+     "title": "The Rust Programming Language: What's Different About This ...",
+     "content": "This book is an experimental fork of The Rust Programming Language created by researchers at the Cognitive Engineering Lab at Brown University. If you’re curious, this page explains what makes this book different from the original TRPL book . But if you just want to get started learning Rust , then feel free to skip this page and come back later."
+    },
+    {
+     "url": "https://rust-lang.org/",
+     "title": "Rust Programming Language",
+     "content": "Rust A language empowering everyone to build reliable and efficient software. Why Rust? Performance Rust is blazingly fast and memory-efficient: with no r…"
+    },
+    {
+     "url": "https://www.megabooks.cz/p/14597916/rust-programming-language",
+     "title": "Rust Programming Language | Megabooks CZ",
+     "content": "Rust is a hugely popular, community-supported free programming language , and this book will show readers how to use Rust's robust type system to keep programs memory-safe and speedy and make the most of the Cargo package manager that brings…"
+    },
+    {
+     "url": "https://doc.rust-lang.org/book/ch00-00-introduction.html",
+     "title": "Introduction - The Rust Programming Language",
+     "content": "Welcome to The Rust Programming Language, an introductory book about Rust. The Rust programming language helps you write faster, more reliable software. High-level ergonomics and low-level control are often at odds in programming language design; Rust challenges that conflict."
+    },
+    {
+     "url": "https://www.scs.stanford.edu/~zyedidia/docs/rust/rust_book.pdf",
+     "title": "The Rust Programming Language",
+     "content": "It’s a friendly and · approachable text intended to help you level up not just your knowledge of Rust, but also · your reach and conﬁdence as a programmer in general. So dive in, get ready to learn—and ... Welcome to The Rust Programming Language, an introductory book about Rust."
+    },
+    {
+     "url": "https://doc.rust-jp.rs/book-ja/",
+     "title": "The Rust Programming Language 日本語版",
+     "content": "著：Steve Klabnik、Carol Nichols、貢献： Rust コミュニティ ; このテキストのこの版では Rust 1.58（2022年1月13日リリース）かそれ以降が使われていることを前提にしています。 Rust をインストールしたりアップデートしたりするには第1章の「インストール」節 を読んでください。 HTML版はhttps://doc. rust -lang.org/stable/ book /で公開されています。 オフラインのときは、rustup でインストール...."
+    },
+    {
+     "url": "https://users.rust-lang.org/t/the-rust-programming-language-book/47535",
+     "title": "The Rust Programming Language book - help - Rust",
+     "content": "Hello! I want to learn Rust (I'm a total beginner) and I would like to read The Rust Programming Language book. But I noticed that there are actually two…"
+    },
+    {
+     "url": "https://doc.rust-lang.org/stable/book/",
+     "title": "The Rust Programming Language - The Rust Programming Language",
+     "content": "Coal Navy Ayu The Rust Programming Language The Rust Programming Language by Steve Klabnik, Carol Nichols, and Chris Krycho, with contributions from the Rust Community This versio"
+    },
+    {
+     "url": "https://rust-lang.org/learn/",
+     "title": "Learn Rust",
+     "content": "Affectionately nicknamed “the book ,” The Rust Programming Language will give you an overview of the language from first principles. You’ll build a few projects along the way, and by the end, you’ll have a solid grasp of the language ."
+    }
+   ]
+  },
+  {
+   "id": "en-asyncio",
+   "query": "python asyncio documentation",
+   "gold_url": "https://docs.python.org/3/library/asyncio",
+   "results": [
+    {
+     "url": "http://docs.python.org/3/library/asyncio.html",
+     "title": "asyncio — Asynchronous I/O — Python 3.13.1 documentation",
+     "content": "Hello World!: asyncio is a library to write concurrent code using the async/await syntax. asyncio is used as a foundation for multiple Python asynchronous frameworks that provide high-performance n..."
+    },
+    {
+     "url": "https://realpython.com/async-io-python/",
+     "title": "Python's asyncio: A Hands-On Walkthrough",
+     "content": "Python's asyncio provides a framework for writing single-threaded concurrent code using coroutines, event loops, and non-blocking I/O operations ..."
+    },
+    {
+     "url": "https://docs.python.org/3/howto/a-conceptual-overview-of-asyncio.html",
+     "title": "A conceptual overview of asyncio",
+     "content": "Creating a task automatically schedules it for execution (by adding a callback to run it in the event loop’s to-do list, that is, collection of jobs). The recommended way to create tasks is via asyncio.create_task()."
+    },
+    {
+     "url": "http://docs.python.org/3.12/library/asyncio.html",
+     "title": "asyncio — Asynchronous I/O — Python 3.12.9 documentation",
+     "content": "Hello World!: asyncio is a library to write concurrent code using the async/await syntax. asyncio is used as a foundation for multiple Python asynchronous frameworks that provide high-performance n..."
+    },
+    {
+     "url": "https://docs.python.org/3/library/asyncio-dev.html",
+     "title": "Developing with asyncio — Python 3.15.2 documentation",
+     "content": "There is currently no way to schedule coroutines or callbacks directly from a different process (such as one started with multiprocessing). The Event loop methods section lists APIs that can read from pipes and watch file descriptors without blocking the event loop. In addition, asyncio’s Subprocess APIs provide a way to start a process and communicate with it from the event loop."
+    },
+    {
+     "url": "https://docs.python.org/3.11//library/asyncio.html",
+     "title": "asyncio — Asynchronous I/O — Python 3.11.16 documentation",
+     "content": "Hello World!: asyncio is a library to write concurrent code using the async/await syntax. asyncio is used as a foundation for multiple Python asynchronous frameworks that provide high-performance n..."
+    },
+    {
+     "url": "https://docs.python.org/3/library/asyncio-task.html",
+     "title": "Coroutines and tasks — Python 3.15.2 documentation",
+     "content": "This section outlines high-level asyncio APIs to work with coroutines and Tasks. Coroutines, Awaitables, Creating tasks, Task cancellation, Task groups, Sleeping, Running tasks concurrently, Eager ..."
+    },
+    {
+     "url": "https://docs.python.org/3/library/asyncio-queue.html",
+     "title": "Queues — Python 3.15.1 documentation",
+     "content": "import asyncio import random import time async def worker(name, queue): while True: # Get a \"work item\" out of the queue. sleep_for = await queue.get() # Sleep for the \"sleep_for\" seconds. await asyncio.sleep(sleep_for) # Notify the queue that the \"work item\" has been processed. queue.task_done() print(f'{name} has slept for {sleep_for:.2f} seconds') async def main(): # Create a queue that we will use to store our \"workload\". queue = asyncio.Queue() # Generate random timings and put them into the queue. total_sleep_time = 0 for _ in range(20): sleep_for = random.uniform(0.05, 1.0) total_sleep_"
+    },
+    {
+     "url": "https://docs.python.org/3/library/asyncio-eventloop.html",
+     "title": "Event loop — Python 3.15.2 documentation",
+     "content": "Source code: Lib/asyncio/events.py, Lib/asyncio/base_events.py Preface The event loop is the core of every asyncio application. Event loops run asynchronous tasks and callbacks, perform network IO ..."
+    },
+    {
+     "url": "https://python-can.readthedocs.io/en/stable/asyncio.html",
+     "title": "Asyncio support - python-can 4.6.1 documentation",
+     "content": "The asyncio module built into Python 3.4 and later can be used to write asynchronous code in a single thread. This library supports receiving messages asynchronously in an event loop using the can.Notifier class. There will still be one thread per CAN bus but the user application will execute entirely in the event loop, allowing simpler concurrency without worrying about threading issues. Interfaces that have a valid file descriptor will however be supported natively without a thread. You can al...."
+    }
+   ]
+  },
+  {
+   "id": "en-pg-json",
+   "query": "postgresql json functions",
+   "gold_url": "https://www.postgresql.org/docs/current/functions-json",
+   "results": [
+    {
+     "url": "http://www.postgresql.org/docs/current/functions-json.html",
+     "title": "PostgreSQL: Documentation: 16: 9.16. JSON Functions and Operators",
+     "content": "The comparison operators follow the ordering rules for B-tree operations outlined in Section 8.14.4. See also Section 9.21 for the aggregate function json_agg which aggregates record values as JSON, the aggregate function json_object_agg which aggregates pairs of values into a JSON object, and their jsonb equivalents, jsonb_agg and jsonb_object_agg."
+    },
+    {
+     "url": "http://www.postgresql.org/docs/9.5/functions-json.html",
+     "title": "PostgreSQL: Documentation: 9.5: JSON Functions and Operators",
+     "content": "This is a non-issue if the input is type jsonb, because the conversion was already done; but for json input, this may result in throwing an error, as noted in Section 8.14. Note: While the examples for the functions json_populate_record, json_populate_recordset, json_to_record and json_to_recordset use constants, the typical use would be to reference a table in the FROM clause and use one of its json or jsonb columns as an argument to the function."
+    },
+    {
+     "url": "http://www.postgresql.org/docs/12/functions-json.html",
+     "title": "PostgreSQL: Documentation: 12: 9.15. JSON Functions and Operators",
+     "content": "The standard comparison operators shown in Table 9.1 are available for jsonb, but not for json. They follow the ordering rules for B-tree operations outlined at Section 8.14.4. See also Section 9.20 for the aggregate function json_agg which aggregates record values as JSON, the aggregate function json_object_agg which aggregates pairs of values into a JSON object, and their jsonb equivalents, jsonb_agg and jsonb_object_agg."
+    },
+    {
+     "url": "https://postgrespro.com/docs/postgresql/current/functions-json",
+     "title": "PostgreSQL : Documentation: 18: 9.16. JSON Functions and Operators : Postgres Professional",
+     "content": "JSON Processing Functions · SQL/JSON path expressions specify item(s) to be retrieved from a JSON value, similarly to XPath expressions used for access to XML content. In PostgreSQL, path expressions are implemented as the jsonpath data type and can use any elements described in Section 8.14.7."
+    },
+    {
+     "url": "https://neon.com/postgresql/postgresql-json-functions/postgresql-to_jsonb",
+     "title": "PostgreSQL to_jsonb() Function",
+     "content": "In this tutorial, you will learn how to use the PostgreSQL to_jsonb() function to convert an SQL value to a value of JSONB type."
+    },
+    {
+     "url": "https://www.beekeeperstudio.io/blog/jsonb-functions-in-postgresql",
+     "title": "Master JSONB Functions in PostgreSQL: A Practical Guide | Beekeeper Studio",
+     "content": "Advanced functions: Complex operations like jsonb_set, jsonb_each_text, and jsonb_array_elements ... These capabilities make PostgreSQL an excellent choice for applications that need to store and query semi-structured JSON data alongside traditional ..."
+    },
+    {
+     "url": "https://risingwave.com/blog/mastering-json-functions-in-postgresql-the-ultimate-guide/",
+     "title": "Mastering JSON Functions in PostgreSQL: The Ultimate Guide | RisingWave",
+     "content": "The json_agg function aggregates input values into a single JSON array. It consolidates multiple values into a structured array format, offering a convenient way to combine and organize data elements effectively within PostgreSQL queries."
+    },
+    {
+     "url": "https://postgrespro.com/docs/postgresql/12/functions-json",
+     "title": "PostgreSQL : Documentation: 12: 9.15. JSON Functions and Operators : Postgres Professional",
+     "content": "If the silent argument is specified and has the true value, these functions suppress the same errors as the @? and @@ operators. SQL/JSON path expressions specify the items to be retrieved from the JSON data, similar to XPath expressions used for SQL access to XML. In PostgreSQL, path expressions are implemented as the jsonpath data type and can use any elements described in Section 8.14.6."
+    },
+    {
+     "url": "https://postgrespro.com/docs/postgresql/13/functions-json",
+     "title": "PostgreSQL : Documentation: 13: 9.16. JSON Functions and Operators : Postgres Professional",
+     "content": "To learn more about the SQL/JSON standard, see [sqltr-19075-6]. For details on JSON types supported in PostgreSQL, see Section 8.14. Table 9.44 shows the operators that are available for use with JSON data types (see Section 8.14). In addition, the usual comparison operators shown in Table 9.1 are available for jsonb, though not for json. The comparison operators follow the ordering rules for B-tree operations outlined in Section 8.14.4. See also Section 9.21 for the aggregate function json_agg which aggregates record values as JSON, the aggregate function json_object_agg which aggregates pairs of values into a JSON object, and their jsonb equivalents, jsonb_agg and jsonb_object_agg."
+    },
+    {
+     "url": "http://www.postgresql.org/docs/9.3/functions-json.html",
+     "title": "PostgreSQL: Documentation: 9.3: JSON Functions and Operators",
+     "content": "Returns the array as JSON. A PostgreSQL multidimensional array becomes a JSON array of arrays. Line feeds will be added between dimension 1 elements if pr…"
+    }
+   ]
+  },
+  {
+   "id": "en-attention",
+   "query": "attention is all you need arxiv",
+   "gold_url": "https://arxiv.org/abs/1706.03762",
+   "results": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Attention_Is_All_You_Need",
+     "title": "Attention Is All You Need",
+     "content": "\"Attention is All you Need\" (PDF). In I. Guyon and U. Von Luxburg and S. Bengio and H. Wallach and R. Fergus and S. Vishwanathan and R. Garnett (ed.). 31st Conference on Neural Information Processing Systems (NIPS). Advances in Neural Information Processing Systems. Vol. 30. Curran Associates, Inc. arXiv..."
+    },
+    {
+     "url": "http://arxiv.org/abs/1706.03762v1",
+     "title": "[1706.03762v1] Attention Is All You Need",
+     "content": "Abstract:The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. T…"
+    },
+    {
+     "url": "http://arxiv.org/abs/1706.03762v7",
+     "title": "[1706.03762v7] Attention Is All You Need",
+     "content": "Abstract:The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. T…"
+    },
+    {
+     "url": "https://arxiv.org/html/1706.03762v7",
+     "title": "Attention Is All You Need",
+     "content": "An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors. The output is computed as a weighted sum of the values, where the weight assigned to each value is computed by a compatibility function of the query with the corresponding key."
+    },
+    {
+     "url": "http://arxiv.org/abs/1706.03762v3",
+     "title": "[1706.03762v3] Attention Is All You Need",
+     "content": "Abstract:The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. T…"
+    },
+    {
+     "url": "https://scispace.com/papers/attention-is-all-you-need-1hodz0wcqb",
+     "title": "(PDF) Attention is All you Need (2017) | Ashish Vaswani",
+     "content": "TL;DR: This paper proposed a simple network architecture based solely on an attention mechanism, dispensing with recurrence and convolutions entirely and ..."
+    },
+    {
+     "url": "http://arxiv.org/abs/1706.03762v4",
+     "title": "[1706.03762v4] Attention Is All You Need",
+     "content": "Abstract:The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. T…"
+    },
+    {
+     "url": "http://arxiv.org/abs/1706.03762v6",
+     "title": "[1706.03762v6] Attention Is All You Need",
+     "content": "Abstract:The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. T…"
+    },
+    {
+     "url": "https://arxiv.org/abs/1906.02792",
+     "title": "[1906.02792] Attention is all you need for Videos: Self-attentio…",
+     "content": "Abstract:Video Captioning and Summarization have become very popular in the recent years due to advancements in Sequence Modelling, with the resurgence o…"
+    },
+    {
+     "url": "http://arxiv.org/abs/1706.03762",
+     "title": "[1706.03762] Attention Is All You Need",
+     "content": "Abstract:The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. T…"
+    }
+   ]
+  },
+  {
+   "id": "en-turing",
+   "query": "alan turing wikipedia",
+   "gold_url": "https://en.wikipedia.org/wiki/Alan_Turing",
+   "results": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Alan_Turing",
+     "title": "Alan Turing",
+     "content": "Alan Mathison Turing (/ˈtjʊərɪŋ/; 23 June 1912 – 7 June 1954) was an English mathematician and logician widely regarded as the father of theoretical computer science. He formalised the concepts of algorithm and computation with the Turing machine, a model of a general-purpose computer, ..."
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Alan_Turing_Memorial",
+     "title": "Alan Turing Memorial",
+     "content": "476722; -2.236028 The Alan Turing Memorial, situated in Sackville Gardens in Manchester, England, is a sculpture in memory of Alan Turing, a pioneer of modern"
+    },
+    {
+     "url": "https://simple.wikipedia.org/wiki/Alan_Turing",
+     "title": "Alan Turing - Simple English Wikipedia, the free encyclopedia",
+     "content": "Alan Mathison Turing (London, 23 June 1912 – Wilmslow, Cheshire, 7 June 1954) was an English mathematician and computer scientist. He is known as the father of computer science. He was born in Maida Vale, London. Turing was born in Maida Vale, London. His father came from a Scottish merchant ..."
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Legacy_of_Alan_Turing",
+     "title": "Legacy of Alan Turing - Wikipedia",
+     "content": "Alan Turing OBE FRS (/ˈtjʊərɪŋ/; 23 June 1912 – 7 June 1954) was an English mathematician, computer scientist, logician, cryptanalyst, philosopher, and theoretical biologist. He left an extensive legacy in mathematics, science, society and popular culture."
+    },
+    {
+     "url": "https://www.epicroadtrips.us/2003/summer/nola/nola_offsite/FQ_en.wikipedia.org/en.wikipedia.org/wiki/Alan_Turing.html",
+     "title": "Alan Turing - Wikipedia, the free encyclopedia",
+     "content": "Alan Mathison Turing (June 23, 1912 – June 7, 1954) was a British mathematician, logician, and cryptographer."
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Category:Alan_Turing",
+     "title": "Category:Alan Turing - Wikipedia",
+     "content": "Wikimedia Commons has media related to Alan Turing. This category has the following 5 subcategories, out of 5 total. ... The following 64 pages are in this category, out of 64 total. This list may not reflect recent changes. ... D. G. Champernowne ... P. N. Furbank"
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Alan_Turing_law",
+     "title": "Alan Turing law",
+     "content": "is named after Alan Turing, the World War II codebreaker and computing pioneer, who was convicted of gross indecency in 1952. Turing received a royal"
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Alan_Turing_Year",
+     "title": "Alan Turing Year - Wikipedia",
+     "content": "The Alan Turing Year, 2012, marked the celebration of the life and scientific influence of Alan Turing during the centenary of his birth on 23 June 1912. Turing had an important influence on computing, computer science, artificial intelligence, developmental biology, and the mathematical theory ..."
+    },
+    {
+     "url": "http://en.wikipedia.org/wiki/Turing",
+     "title": "Alan Turing - Wikipedia",
+     "content": "Turing left a lasting legacy in mathematics, computing, and codebreaking. His wartime work, covered by the Official Secrets Act, went unrecognised during…"
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Alan_Turing_Institute",
+     "title": "Alan Turing Institute",
+     "content": "The Alan Turing Institute is the United Kingdom's national institute for data science and artificial intelligence, founded in 2015 and largely funded by the UK Government. It is named after Alan Turing, the British mathematician and computing pioneer. Since 2025, the institute focuses on defense ..."
+    }
+   ]
+  },
+  {
+   "id": "en-rust-repo",
+   "query": "rust-lang rust github",
+   "gold_url": "https://github.com/rust-lang/rust",
+   "results": [
+    {
+     "url": "http://github.com/rust-lang/rust",
+     "title": "GitHub - rust-lang/rust: Empowering everyone to build reliable a…",
+     "content": "This is the main source code repository for Rust. It contains the compiler, standard library, and documentation. Performance: Fast and memory-efficient, suitable for critical services, embedded devices, and easily integrated with other languages."
+    },
+    {
+     "url": "https://github.com/rust-lang/book",
+     "title": "GitHub - rust-lang/book: The Rust Programming Language · GitHub",
+     "content": "You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You swi…"
+    },
+    {
+     "url": "https://github.com/rust-lang/rust-by-example",
+     "title": "Learn Rust with examples (Live code editor included)",
+     "content": "If you'd like to read Rust by Example, you can visit https://doc.rust-lang.org/rust-by-example/ to read it online. If you'd like to read it locally, ..."
+    },
+    {
+     "url": "https://github.com/rust-lang",
+     "title": "The Rust Programming Language · GitHub",
+     "content": "The Rust Programming Language has 248 repositories available. Follow their code on GitHub."
+    },
+    {
+     "url": "https://github.com/rust-lang/rustlings/",
+     "title": "GitHub - rust-lang/rustlings: :crab: Small exercises to get you used to reading and writing Rust code! · GitHub",
+     "content": "Small exercises to get you used to reading and writing Rust code - Recommended in parallel to reading the official Rust book 📚️"
+    },
+    {
+     "url": "https://github.com/rust-lang/www.rust-lang.org",
+     "title": "GitHub - rust-lang/www.rust-lang.org: The home of the Rust website · GitHub",
+     "content": "The home of the Rust website. Contribute to rust-lang/www.rust-lang.org development by creating an account on GitHub."
+    },
+    {
+     "url": "http://github.com/orgs/rust-lang/repositories",
+     "title": "rust-lang repositories · GitHub",
+     "content": "You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You swi…"
+    },
+    {
+     "url": "https://github.com/rust-lang/rust/issues",
+     "title": "Issues · rust-lang/rust · GitHub",
+     "content": "You signed in with another tab or window. Reload to refresh your session.You signed out in another tab or window. Reload to refresh your session.You swit…"
+    },
+    {
+     "url": "https://github.com/rust-lang/reference",
+     "title": "GitHub - rust-lang/reference: The Rust Reference · GitHub",
+     "content": "This document is the primary reference for the Rust programming language."
+    },
+    {
+     "url": "https://github.com/rust-lang/rust/pull/60900",
+     "title": "Trait upcasting by alexreg · Pull Request #60900 · rust-lang/rus…",
+     "content": "Saved searches Use saved searches to filter your results more quickly You signed in with another tab or window. Reload to refresh your session.You signed…"
+    }
+   ]
+  },
+  {
+   "id": "en-compose",
+   "query": "docker compose file reference",
+   "gold_url": "https://docs.docker.com/reference/compose-file",
+   "results": [
+    {
+     "url": "https://docs.divio.com/reference/docker-docker-compose/",
+     "title": "The docker-compose.yml file | Divio Documentation",
+     "content": "To configure the orchestration, Docker Compose uses a docker-compose.yml file. It specifies what images are required, what ports they need to expose, whether they have access to the host filesystem, what commands should be run when they start up, and so on."
+    },
+    {
+     "url": "https://github.com/",
+     "title": "[Bug]: Docker compose file references wrong image · Issue #14 · haijeploeg/Prunarr",
+     "content": "I have searched existing issues to ensure this bug hasn't been reported"
+    },
+    {
+     "url": "https://docker-docs.uclv.cu/compose/compose-file/",
+     "title": "Compose file version 3 reference | Docker Documentation",
+     "content": "You can also specify the name of the volume separately from the name used to refer to it within the Compose file: volumes: data: external: name: actual-name-of-volume ... External volumes that do not exist are created if you use docker stack ..."
+    },
+    {
+     "url": "https://stackoverflow.com/questions/66017563/reference-dockerfile-from-docker-compose-yml",
+     "title": "Reference Dockerfile from docker-compose.yml? - Stack Overflow",
+     "content": "I have a web service that uses a MySQL as its backing store. I want to Dockerize this service as well as its MySQL DB. For the service I have the following Dockerfile: FROM openjdk:8-jdk-alpine as ..."
+    },
+    {
+     "url": "https://stackoverflow.com/questions/42403067/can-docker-compose-directly-reference-other-docker-compose-files-and-start-every",
+     "title": "Can docker-compose directly reference other docker-compose files and start everything in them? - Stack Overflow",
+     "content": "Even after 5 years, docker-compose has no ability to do things like this or docker-compose up -f docker-compose*.yml. I would advise all people to use yq, and use it to merge all yaml files into one."
+    },
+    {
+     "url": "https://github.com/docker/docs/issues/3654",
+     "title": "Compose file reference doc references `.env` file support · Issue #3654 · docker/docs",
+     "content": "area/composeRelates to docker-compose.yml spec or docker-compose binaryRelates to docker-compose.yml spec or docker-compose binarylifecycle/locked ... We should either remove the reference to .env from this document or clarify that it's only a docker-compose feature."
+    },
+    {
+     "url": "https://www.reddit.com/r/docker/comments/st8kfz/docker_compose_reference/",
+     "title": "r/docker on Reddit: Docker compose reference?",
+     "content": "Well, imho the official documentation is quite good: https://docs.docker.com/compose/compose-file/compose-file-v3/"
+    },
+    {
+     "url": "https://andrewlock.net/converting-a-docker-compose-file-to-aspire/",
+     "title": "Converting a docker - compose file to .NET Aspire",
+     "content": "In this post I describe how I converted the deployment method of the mailing-list manager lismonk from a docker - compose .yml file to an Aspire app host project"
+    },
+    {
+     "url": "https://docs.release.com/reference-documentation/docker-compose-conversion-support",
+     "title": "Docker Compose conversion support | Release",
+     "content": "The Release team has worked with thousands of Docker Compose files to generate working environments in Kubernetes. Here is the supported conversion matrix for Docker Compose"
+    },
+    {
+     "url": "http://docs.docker.com/reference/compose-file/",
+     "title": "Compose file reference | Docker Docs",
+     "content": "Compose file reference The Compose Specification is the latest and recommended version of the Compose file format. It helps you define a Compose file whic…"
+    }
+   ]
+  },
+  {
+   "id": "en-numpy",
+   "query": "numpy indexing arrays",
+   "gold_url": "https://numpy.org/doc/stable/user/basics.indexing",
+   "results": [
+    {
+     "url": "https://numpy.org/doc/stable/user/basics.indexing.html",
+     "title": "Indexing on ndarrays — NumPy v2.5 Manual",
+     "content": "As in Python, all indices are zero-based: for the i-th index \\(n_i\\), the valid range is \\(0 \\le n_i < d_i\\) where \\(d_i\\) is the i-th element of the shape of the array. Negative indices are interpreted as counting from the end of the array (i.e., if \\(n_i < 0\\), it means \\(n_i + d_i\\)). All arrays generated by basic slicing are always views of the original array. ... NumPy slicing creates a view instead of a copy as in the case of built-in Python sequences such as string, tuple and list."
+    },
+    {
+     "url": "https://www.datacamp.com/doc/numpy/array-indexing",
+     "title": "NumPy Array Indexing",
+     "content": "Learn the essentials of NumPy indexing with clear examples and detailed explanations. Enhance your data manipulation skills by understanding advanced indexing techniques in Python's powerful NumPy ..."
+    },
+    {
+     "url": "https://numpy.org/doc/1.21/reference/arrays.indexing.html",
+     "title": "Indexing — NumPy v1.21 Manual",
+     "content": "As in Python, all indices are zero-based: for the i-th index \\(n_i\\), the valid range is \\(0 \\le n_i < d_i\\) where \\(d_i\\) is the i-th element of the shape of the array. Negative indices are interpreted as counting from the end of the array (i.e., if \\(n_i < 0\\), it means \\(n_i + d_i\\)). All arrays generated by basic slicing are always views of the original array. ... NumPy slicing creates a view instead of a copy as in the case of builtin Python sequences such as string, tuple and list."
+    },
+    {
+     "url": "https://numpy.org/devdocs/user/basics.indexing.html",
+     "title": "Indexing on ndarrays — NumPy v2.6.dev0 Manual",
+     "content": "As in Python, all indices are zero-based: for the i-th index \\(n_i\\), the valid range is \\(0 \\le n_i < d_i\\) where \\(d_i\\) is the i-th element of the shape of the array. Negative indices are interpreted as counting from the end of the array (i.e., if \\(n_i < 0\\), it means \\(n_i + d_i\\)). All arrays generated by basic slicing are always views of the original array. ... NumPy slicing creates a view instead of a copy as in the case of built-in Python sequences such as string, tuple and list."
+    },
+    {
+     "url": "https://numpy.org/doc/1.16/reference/arrays.indexing.html",
+     "title": "Indexing — NumPy v1.16 Manual",
+     "content": "For example, x[1:10:5,::-1] can also be implemented as obj = (slice(1,10,5), slice(None,None,-1)); x[obj] . This can be useful for constructing generic code that works on arrays of arbitrary dimension. ... The newaxis object can be used in all slicing operations to create an axis of length one. newaxis is an alias for ‘None’, and ‘None’ can be used in place of this with the same result. Advanced indexing is triggered when the selection object, obj, is a non-tuple sequence object, an ndarray (of data type integer or bool), or a tuple with at least one sequence object or ndarray (of data type integer or bool)."
+    },
+    {
+     "url": "https://towardsdatascience.com/introducing-numpy-part-2-indexing-arrays-5b381b90d1d0/",
+     "title": "Introducing NumPy, Part 2: Indexing Arrays",
+     "content": "In this article, we'll examine how to access the elements in arrays using indexes and slices, so you can extract the value of elements and change them using ..."
+    },
+    {
+     "url": "https://towardsdatascience.com/working-with-numpy-arrays-indexing-e4c08595ed57/",
+     "title": "Working with Numpy Arrays : Indexing | Towards Data Science",
+     "content": "Accessing elements in Numpy Arrays"
+    },
+    {
+     "url": "https://github.com/numpy/numpy/pull/16080",
+     "title": "BUG: numpy.einsum indexing arrays now accept numpy int type by r…",
+     "content": "You signed in with another tab or window. Reload to refresh your session.You signed out in another tab or window. Reload to refresh your session.You swit…"
+    },
+    {
+     "url": "https://numpy.org/doc/1.26/reference/arrays.indexing.html",
+     "title": "Indexing routines — NumPy v1.26 Manual",
+     "content": "Indexing on ndarrays · Translates slice objects to concatenation along the second axis"
+    },
+    {
+     "url": "https://www.w3schools.com/python/numpy/numpy_array_indexing.asp",
+     "title": "NumPy Array Indexing",
+     "content": "You can access an array element by referring to its index number. The indexes in NumPy arrays start with 0, meaning that the first element has index 0, and the second has index 1 etc."
+    }
+   ]
+  },
+  {
+   "id": "en-serde",
+   "query": "serde rust crate serialization",
+   "gold_url": "https://serde.rs",
+   "results": [
+    {
+     "url": "https://github.com/",
+     "title": "GitHub - anatols/serde_hooks: Rust crate that allows modifying serde serialization behavior at runtime · GitHub",
+     "content": "Rust crate that allows modifying serde serialization behavior at runtime - anatols/serde_hooks"
+    },
+    {
+     "url": "https://codeberg.org/swatters/serde_html_form",
+     "title": "swatters/serde_html_form: Rust crate for ( de -) serialization of `application/x-www-form-urlencoded` data. - Codeberg.org",
+     "content": "serde_html_form - Rust crate for ( de -) serialization of `application/x-www-form-urlencoded` data."
+    },
+    {
+     "url": "https://crates.io/crates/serde",
+     "title": "serde - crates.io: Rust Package Registry",
+     "content": "Serde is a framework for serializing and deserializing Rust data structures efficiently and generically."
+    },
+    {
+     "url": "https://lib.rs/crates/serde_with",
+     "title": "serde_with — Rust data encoding library // Lib.rs",
+     "content": "This crate provides custom de/serialization helpers to use in combination with serde's with annotation and with the improved serde_as-annotation."
+    },
+    {
+     "url": "https://crates.io/crates/serde_with",
+     "title": "serde_with - crates.io: Rust Package Registry",
+     "content": "Custom de/serialization functions for Rust's serde"
+    },
+    {
+     "url": "https://github.com/serde-rs/serde",
+     "title": "GitHub - serde-rs/serde: Serialization framework for Rust · GitHub",
+     "content": "serde = { version = \"1.0\", features = [\"derive\"] } # Each data format lives in its own crate; the sample code below uses JSON # but you may be using a different one. serde_json = \"1.0\" use serde::{Deserialize, Serialize}; #[derive(Serialize, Deserialize, Debug)] struct Point { x: i32, y: i32, } fn main() { let point = Point { x: 1, y: 2 }; // Convert the Point to a JSON string."
+    },
+    {
+     "url": "https://crates.io/crates/serde_json",
+     "title": "serde_json - crates.io: Rust Package Registry",
+     "content": "Serde is a framework for serializing and deserializing Rust data structures efficiently and generically."
+    },
+    {
+     "url": "https://lucumr.pocoo.org/2026/9/29/deser/",
+     "title": "Deser: Rethinking Rust Serialization | Armin Ronacher's Thoughts and Writings",
+     "content": "written on September 29, 2026 ; Serde is an amazing serialization library for Rust and it has been a huge reason why I felt productive with it for years. However already while at Sentry I got quite frustrated with some of the limitations with it but actually replacing Serde is tricky because of the might that it has in the ecosystem. Also because it’s quite hard to actually do better without also making some potentially painful compromises. Here are three examples of Serde corner cases that sh...."
+    },
+    {
+     "url": "https://www.shuttle.dev/blog/2024/01/23/using-serde-rust",
+     "title": "Using Serde in Rust - Shuttle.dev",
+     "content": "The serde Rust crate is used to efficiently serialize and deserialize data in many formats. It does this by providing two traits you can use, aptly named Deserialize and Serialize."
+    },
+    {
+     "url": "https://crates.io/crates/serde-binary-adv",
+     "title": "serde-binary-adv - crates.io: Rust Package Registry",
+     "content": "Serde Binary Advanced is a Serde library enabling the serialization and deserialization of Rust objects to binary representations. Features."
+    }
+   ]
+  },
+  {
+   "id": "en-kernel",
+   "query": "linux kernel documentation scheduler",
+   "gold_url": "https://docs.kernel.org/scheduler",
+   "results": [
+    {
+     "url": "https://ubuntu.com/real-time/docs/explanation/schedulers/",
+     "title": "Linux kernel schedulers - Real-time Ubuntu documentation",
+     "content": "The Completely Fair Scheduler (CFS) is the default scheduler in the Linux kernel and it is designed to provide fair CPU time to all processes. It uses a Red-black tree data structure to keep track of the processes and their CPU time."
+    },
+    {
+     "url": "https://static.lwn.net/kerneldoc/scheduler/index.html",
+     "title": "Scheduler — The Linux Kernel documentation",
+     "content": "The Linux Kernel. 6.13.0-rc2. Quick search. Contents. Development process · Submitting patches · Code of conduct · Maintainer handbook · All development-process ..."
+    },
+    {
+     "url": "http://www.mjmwired.net/kernel/Documentation/scheduler/sched-stats.rst",
+     "title": "Linux Kernel Documentation / scheduler / sched-stats.rst",
+     "content": "==================== Scheduler Statistics ==================== Version 16 of schedstats changed the order of definitions within 'enum cpu_idle_type', whic…"
+    },
+    {
+     "url": "https://docs.kernel.org/scheduler/index.html",
+     "title": "Scheduler — The Linux Kernel documentation",
+     "content": "Unsorted documentation · Translations · Translations · Show Source · English · Chinese (Simplified) Spanish · Completions - “wait for completion” barrier APIs · membarrier() System Call · CPU Scheduler implementation hints for architecture specific code ·"
+    },
+    {
+     "url": "http://www.mjmwired.net/kernel/Documentation/scheduler/sched-arch.rst",
+     "title": "Linux Kernel Documentation / scheduler / sched-arch.rst",
+     "content": "================================================================= CPU Scheduler implementation hints for architecture specific code =====================…"
+    },
+    {
+     "url": "https://lkml.iu.edu/hypermail/linux/kernel/1407.0/02208.html",
+     "title": "Linux - Kernel Archive: [RFCv2 PATCH 01/23] sched: Documentation for scheduler energy cost model",
+     "content": ""
+    },
+    {
+     "url": "http://www.mjmwired.net/kernel/Documentation/scheduler",
+     "title": "Linux Kernel Documentation / scheduler",
+     "content": ""
+    },
+    {
+     "url": "https://www.kernel.org/doc/html/next/scheduler/sched-ext.html",
+     "title": "Extensible Scheduler Class — The Linux Kernel documentation",
+     "content": "Switching to and from sched_ext ; CONFIG_SCHED_CLASS_EXT is the config option to enable sched_ext and tools/sched_ext contains the example schedulers. The following config options should be enabled to use sched_ext: CONFIG_BPF=y CONFIG_SCHED_CLASS_EXT=y CONFIG_BPF_SYSCALL=y CONFIG_BPF_JIT=y CONFIG_DEBUG_INFO_BTF=y CONFIG_BPF_JIT_ALWAYS_ON=y CONFIG_BPF_JIT_DEFAULT_ON=y sched_ext is used only when the BPF scheduler is loaded and running. If a task explicitly sets its scheduling policy to SCHED_EXT...."
+    },
+    {
+     "url": "https://docs.kernel.org/6.8/scheduler/schedutil.html",
+     "title": "Schedutil — The Linux Kernel documentation",
+     "content": "For more detail see: include/uapi/linux/sched/types.h · Every time the scheduler load tracking is updated (task wakeup, task migration, time progression) we call out to schedutil to update the hardware DVFS state."
+    },
+    {
+     "url": "https://docs.kernel.org/scheduler/sched-ext.html",
+     "title": "Extensible Scheduler Class — The Linux Kernel documentation",
+     "content": "See the “Scheduling Cycle” section for a more detailed description of how a freshly woken up task gets on a CPU. include/linux/sched/ext.h defines the core data structures and constants, while the ops table (struct sched_ext_ops) is defined in kernel/sched/ext/internal.h."
+    }
+   ]
+  },
+  {
+   "id": "en-mdn-array",
+   "query": "mdn javascript array",
+   "gold_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array",
+   "results": [
+    {
+     "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Typed_arrays",
+     "title": "JavaScript typed arrays - MDN Web Docs",
+     "content": "JavaScript typed arrays are array-like objects that provide a mechanism for reading and writing raw binary data in memory buffers."
+    },
+    {
+     "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array",
+     "title": "Array - JavaScript - MDN Web Docs",
+     "content": "The Array object, as with arrays in other programming languages, enables storing a collection of multiple items under a single variable name, and has members for performing common array operations."
+    },
+    {
+     "url": "https://msdn.microsoft.com/en-us/library/BR212474",
+     "title": "ArrayBuffer - JavaScript | MDN",
+     "content": "In this article ArrayBuffer The ArrayBuffer object is used to represent a generic raw binary data buffer. It is an array of bytes, often referred to in o…"
+    },
+    {
+     "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/shift",
+     "title": "Array.prototype.shift() - JavaScript - MDN Web Docs",
+     "content": "The shift() method of Array instances removes the first element from an array and returns that removed element. This method changes the ..."
+    },
+    {
+     "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join",
+     "title": "Array.prototype.join() - JavaScript - MDN Web Docs",
+     "content": "The join() method of Array instances returns a new string that is the concatenation of all elements in this array, separated by commas or a ..."
+    },
+    {
+     "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/unshift",
+     "title": "Array.prototype.unshift() - JavaScript - MDN Web Docs",
+     "content": "The unshift() method of Array instances adds the specified elements to the beginning of an array and returns the new length of the array."
+    },
+    {
+     "url": "https://developer.mozilla.org/en-US/docs/Glossary/Array",
+     "title": "Array - Glossary - MDN Web Docs",
+     "content": "Each item in an array has a number attached to it, called a numeric index, that allows you to access it. In JavaScript, arrays start at index zero and can be manipulated with various methods."
+    },
+    {
+     "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex",
+     "title": "Array.prototype.findIndex() - JavaScript - MDN Web Docs",
+     "content": "The findIndex() method of Array instances returns the index of the first element in an array that satisfies the provided testing function."
+    },
+    {
+     "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat",
+     "title": "Array.prototype.flat() - JavaScript - MDN Web Docs",
+     "content": "The flat() method of Array instances creates a new array with all sub-array elements concatenated into it recursively up to the specified ..."
+    },
+    {
+     "url": "https://lia.disi.unibo.it/materiale/JS/developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array.html",
+     "title": "Array - JavaScript | MDN",
+     "content": "Arrays are list-like objects whose prototype has methods to perform traversal and mutation operations. Neither the length of a JavaScript array nor the types of its elements are fixed."
+    }
+   ]
+  },
+  {
+   "id": "ja-fuji",
+   "query": "富士山 wikipedia",
+   "gold_url": "https://ja.wikipedia.org/wiki/富士山",
+   "results": [
+    {
+     "url": "https://ja.wikipedia.org/wiki/%E5%AF%8C%E5%A3%AB%E5%B1%B1",
+     "title": "富士山 - Wikipedia",
+     "content": "富士山（ふじさん）は、日本の活火山である。標高は3775.56 m、山体の最高地点は3776.12 mで、日本最高峰（剣ヶ峰）の独立峰で、その優美な風貌は日本国外でも日本の象徴として広く知られている。山梨県（富士吉田市..."
+    },
+    {
+     "url": "https://gan.wikipedia.org/wiki/%E5%AF%8C%E5%A3%AB%E5%B1%B1",
+     "title": "富士山",
+     "content": "富士山係日本嗰最高峰，係一座睡火山，亦有人話係活火山，日本人當佢做日本嗰象徵。 富士山位嘚日本中部嗰山野縣嗰，每年有好多人去旅行。 CommonsDelinker最後編輯於9 ..."
+    },
+    {
+     "url": "https://zh.wikipedia.org/zh-hans/%E5%A4%A7%E5%88%86%E5%AF%8C%E5%A3%AB%E5%B1%B1",
+     "title": "大分富士山- 维基百科，自由的百科全书",
+     "content": "大分富士山位于台湾高雄市和花莲县之间，属于中央山脉，标高3056米。因山形似富士山，故以富士为名，在南双头山之东南。 大分富士山. 大分富士山在台湾的位置."
+    },
+    {
+     "url": "https://ja.wikipedia.org/wiki/Category:%E5%AF%8C%E5%A3%AB%E5%B1%B1",
+     "title": "Category:富士山 - Wikipedia",
+     "content": "ウィキメディア・コモンズには、富士山に関するカテゴリがあります。 · このカテゴリには下位カテゴリ 7 件が含まれており、そのうち以下の 7 件を表示しています。 · 郷土富士 （1サブカテゴリ、133ページ） · ..."
+    },
+    {
+     "url": "https://ja.wikipedia.org/wiki/%E5%AF%8C%E5%A3%AB%E5%B1%B1_(%E6%9B%96%E6%98%A7%E3%81%95%E5%9B%9E%E9%81%BF)",
+     "title": "富士山 (曖昧さ回避) - Wikipedia",
+     "content": "富士山（ふじさん、ふじやま、とみすやま）。冨士山は異体字。 · 同名の山岳は多数あるが、日本語版に記事があるもの、それに準じて関連項目に記述があるもののみを挙げる。 · 富士山 - 静岡県と山梨県の県境に位..."
+    },
+    {
+     "url": "https://zh.wikipedia.org/wiki/%E5%AF%8C%E5%A3%AB%E5%B1%B1%E5%99%B4%E7%99%BC%E5%8F%B2",
+     "title": "富士山噴發史- 維基百科，自由的百科全書",
+     "content": "就高度和山體的大小而言，富士山是日本最大的火山。富士山在近10萬年間經歷了急速變大的過程，因此富士山可歸類為「年輕的火山」。現在看到的富士山是自約1萬年前開始 ..."
+    },
+    {
+     "url": "https://www.fujisan-kyokai.jp/viewspot50",
+     "title": "富士山 絶景スポット50選 | 日本 富士山 協会",
+     "content": "河口湖越しの富士山の眺望地として人気の湖畔の公園。 ラベンダーが咲く初夏は富士山とのコラボが人気です。 四季を通じて季節 …"
+    },
+    {
+     "url": "https://www.pref.shizuoka.jp/fujisanview/index.html",
+     "title": "ライブカメラ 富士山 ビュー｜静岡県公式ホームページ",
+     "content": "静岡県公式ライブカメラで、富士山の美しい景色をリアルタイムで楽しめます。"
+    },
+    {
+     "url": "https://wikitravel.org/ja/%E5%AF%8C%E5%A3%AB%E5%B1%B1",
+     "title": "富士山 - ウィキトラベル",
+     "content": "何らかの理由で編集が行えない場合は、Wikitravel:旅人の居酒屋 を参照してください。 · 富士山 (ふじさん) は日本の静岡県と山梨県に跨る活火山である。日本最高峰の山であり標高は3,776m。"
+    },
+    {
+     "url": "https://hamusoku.com/",
+     "title": "Wikipedia さん 富士山 の画像が投稿されまくってブチ切れる",
+     "content": "Wikipedia の「 富士山 」の記事，あまりにもみんなが 富士山 大好きすぎて写真を貼りまくるせいでキレられてるのが好きですわ！ 「ウィキペディアは(中略) 富士山 の画像投稿サイトではありません。」 pic.twitter.com/bLwtNhBkb9"
+    }
+   ]
+  },
+  {
+   "id": "ja-genji",
+   "query": "源氏物語 wikipedia",
+   "gold_url": "https://ja.wikipedia.org/wiki/源氏物語",
+   "results": [
+    {
+     "url": "https://ja.wikipedia.org/wiki/%E6%BA%90%E6%B0%8F%E7%89%A9%E8%AA%9E%E5%90%84%E5%B8%96%E3%81%AE%E3%81%82%E3%82%89%E3%81%99%E3%81%98",
+     "title": "源氏物語各帖のあらすじ",
+     "content": "この項目では『源氏物語』の各帖のあらすじを簡潔に記載する。詳細は各帖の項目を参照。 · 登場人物プロフィールは「源氏物語の登場人物」を参照。 ... 帝（桐壺帝）はそれほど身分が高くない桐壺更衣を寵愛し皇..."
+    },
+    {
+     "url": "https://zh.wikipedia.org/zh-hant/%E6%BA%90%E6%B0%8F%E7%89%A9%E8%AA%9E%E5%8D%83%E5%B9%B4%E7%B4%80_Genji",
+     "title": "源氏物語千年紀Genji",
+     "content": "《源氏物語千年紀Genji》是一部日本動畫作品，於2009年1月15日至3月26日在富士電視台noitaminA播出。 源氏物語千年紀Genji. 源氏物語千年紀Genji. The Tale of Genji:"
+    },
+    {
+     "url": "https://ja.wikipedia.org/wiki/%E6%BA%90%E6%B0%8F%E7%89%A9%E8%AA%9E",
+     "title": "源氏物語 - Wikipedia",
+     "content": "『源氏物語』（げんじものがたり、）は、平安時代中期に成立した日本の長編物語、小説。全54帖、文献初出は1008年（寛弘五年）、平安末期に「源氏物語絵巻」として絵画化された。作者とされる紫式部は平安中期に..."
+    },
+    {
+     "url": "https://ja.wikipedia.org/wiki/%E6%BA%90%E6%B0%8F%E7%89%A9%E8%AA%9E%E3%81%AE%E7%99%BB%E5%A0%B4%E4%BA%BA%E7%89%A9",
+     "title": "源氏物語の登場人物",
+     "content": "源氏物語の登場人物（げんじものがたりのとうじょうじんぶつ）は、『源氏物語』に登場する、架空の人物の一覧である。 · 基本的に登場順であるが、一部は血縁関係でまとめてある。物語詳細は「源氏物語各帖のあ..."
+    },
+    {
+     "url": "https://zh.wikipedia.org/zh-hant/%E5%8D%83%E5%B9%B4%E4%B9%8B%E6%81%8B_%E5%85%89%E6%BA%90%E6%B0%8F%E7%89%A9%E8%AF%AD",
+     "title": "千年之戀光源氏物語",
+     "content": "故事發生在千年之前的越前國，紫氏部（吉永小百合飾）嫁給比自己大很多的丈夫，生下女兒賢子。丈夫婚後不久就去世，紫氏一直過著孀居的生活並開始創作小說《源氏物語》。"
+    },
+    {
+     "url": "https://ja.wikipedia.org/wiki/Category:%E6%BA%90%E6%B0%8F%E7%89%A9%E8%AA%9E",
+     "title": "Category:源氏物語 - Wikipedia",
+     "content": "このカテゴリには下位カテゴリ 6 件が含まれており、そのうち以下の 6 件を表示しています。 ... このカテゴリには 48 ページが含まれており、そのうち以下の 48 ページを表示しています。"
+    },
+    {
+     "url": "https://ja.wikipedia.org/wiki/Category:%E6%BA%90%E6%B0%8F%E7%89%A9%E8%AA%9E%E3%82%92%E5%9F%BA%E3%81%AB%E3%81%97%E3%81%9F%E4%BD%9C%E5%93%81",
+     "title": "Category:源氏物語を基にした作品 - Wikipedia",
+     "content": "『源氏物語』を題材とした作品に関するカテゴリ。 · このカテゴリには 44 ページが含まれており、そのうち以下の 44 ページを表示しています。"
+    },
+    {
+     "url": "https://ja.wikipedia.org/wiki/%E6%BA%90%E6%B0%8F%E7%89%A9%E8%AA%9E_(%E6%9B%96%E6%98%A7%E3%81%95%E5%9B%9E%E9%81%BF)",
+     "title": "源氏物語 (曖昧さ回避) - Wikipedia",
+     "content": "源氏物語（げんじものがたり） · 上記を題材とした作品"
+    },
+    {
+     "url": "https://zh.wikipedia.org/zh-tw/%E6%BA%90%E6%B0%8F%E7%89%A9%E8%AA%9E_%E5%8D%83%E5%B9%B4%E4%B9%8B%E8%AC%8E",
+     "title": "源氏物語千年之謎",
+     "content": "本片改編自高山由紀子（日語：高山由紀子）的小說《源氏物語悲哀的皇子》（『源氏物語悲しみの皇子』）。 源氏物語千年之謎 源氏物語千年の謎. 基本資料. 導演, 鶴橋康夫."
+    },
+    {
+     "url": "https://caswc.co.kr/cate/product/farhc4fcstv505c.htm",
+     "title": "希少 教養フランス語 解釈篇 田辺貞之助著 白水社 1962年3版 仏文解釈 - 源氏物語 Wikipedia 人事コン....",
+     "content": "参考書 ; 希少 教養フランス語 解釈篇 田辺貞之助著 白水社 1962年3版 仏文解釈 - 源氏物語 Wikipedia 人事コンサルタントの読書・映画備忘録: は フランス文法大全"
+    }
+   ]
+  },
+  {
+   "id": "ja-tokyo-station",
+   "query": "東京駅 wikipedia",
+   "gold_url": "https://ja.wikipedia.org/wiki/東京駅",
+   "results": [
+    {
+     "url": "https://ja.wikipedia.org/wiki/東京駅",
+     "title": "東京駅 - Wikipedia",
+     "content": "東京駅（とうきょうえき）は、東京都千代田区丸の内一丁目にある、東日本旅客鉄道（JR東日本）・東海旅客鉄道（JR東海）・東京地下鉄（東京メトロ）の駅。JR東日本の在来線と新幹線各路線、JR東海の東海道新幹線、..."
+    },
+    {
+     "url": "https://ja.wikipedia.org/wiki/%E6%9D%B1%E4%BA%AC%E9%A7%85%E3%81%AE%E6%AD%B4%E5%8F%B2",
+     "title": "東京駅の歴史 - Wikipedia",
+     "content": "東京駅の歴史（とうきょうえきのれきし）では、東日本旅客鉄道（JR東日本）・東海旅客鉄道（JR東海）・東京地下鉄（東京メトロ）東京駅の歴史を説明する。 · 日本の鉄道開業（1872年）から約12年後、東京中心部にお..."
+    },
+    {
+     "url": "https://ja.wikipedia.org/wiki/%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB:%E6%9D%B1%E4%BA%AC%E9%A7%85%E5%91%A8%E8%BE%BA%E3%81%AE%E4%BD%8D%E7%BD%AE%E9%96%A2%E4%BF%82.jpg",
+     "title": "ファイル:東京駅周辺の位置関係.jpg",
+     "content": "東京駅. グローバルなファイル使用状況. 次に掲げる他のウィキでもこの画像を使用しています: uk.wikipedia. ... zh.wikipedia.org での使用状況. 東京站. 言語. このページ ..."
+    },
+    {
+     "url": "https://ja.wikipedia.org/wiki/Category:%E6%9D%B1%E4%BA%AC%E9%A7%85",
+     "title": "Category:東京駅 - Wikipedia",
+     "content": "東京駅に関するトピックを扱うカテゴリ。 · このカテゴリには以下の下位カテゴリのみが含まれています。 ... このカテゴリには 32 ページが含まれており、そのうち以下の 32 ページを表示しています。"
+    },
+    {
+     "url": "http://www.tokyostationcity.com/learning/",
+     "title": "東京駅の概要・歴史",
+     "content": "所在地: 〒100-0005 東京都千代田区丸の内1丁目 ; 開業: 大正3年（1914年）12月20日 ; 総面積: 182,000㎡（東京ドーム3.9個分） ; 一日平均乗車人員: 約460,000人 ; 運転本数（ ..."
+    },
+    {
+     "url": "https://w.atwiki.jp/ekimerowiki/pages/8.html",
+     "title": "東京駅 - 首都圏駅メロwiki",
+     "content": "本Wikiは7月29日より移転いたしました。 詳細はトップページをご参照ください。 ... 主要ページ. ※「特定列車時刻表」「発車メロディ変更履歴」を除き、 ..."
+    },
+    {
+     "url": "https://commons.wikimedia.org/wiki/File:%E6%9D%B1%E4%BA%AC%E9%A7%85_Tokyo_Station_(8164152017).jpg",
+     "title": "File:東京駅 Tokyo Station (8164152017).jpg",
+     "content": "2012年10月6日、ドームの復元工事が行われ67年ぶりに創建当時の姿を取り戻した東京駅。 ... 東京駅に訪れたそうです。地下街はなかったけれども、当時から大変賑わっ ..."
+    },
+    {
+     "url": "https://www.weblio.jp/content/%E6%9D%B1%E4%BA%AC%E9%A7%85%E3%81%AE%E6%AD%B4%E5%8F%B2",
+     "title": "東京駅の歴史とは - わかりやすく解説 Weblio辞書",
+     "content": "日本の鉄道開業（1872年）から約12年後、東京中心部においてそれまで各方面別に分かれていたターミナル駅を高架線で結び中間点に中央停車場を設置する構想（東京市街高架鉄道構想）から始まり、1914年（大正3年）12月20日に開業し「東京駅」と命名された。東京駅の開業により、日本初の鉄道起点駅であり長らくターミナル駅であった新橋駅（初代）は、30年目にして旅客駅としての役目を終えた。"
+    },
+    {
+     "url": "https://commons.wikimedia.org/wiki/File:%E6%9D%B1%E4%BA%AC%E9%A7%85%E5%85%A8%E6%99%AF%EF%BC%882021%E5%B9%B43%E6%9C%88%EF%BC%89.jpg",
+     "title": "File:東京駅全景（2021年3月）.jpg",
+     "content": "日本語: 2021年3月の東京駅全景。八重洲地区の再開発が進行中である。 Date, 25 March 2021, 11:52. Source, Own work."
+    },
+    {
+     "url": "https://railway.jr-central.co.jp/station-guide/shinkansen/tokyo/map.html",
+     "title": "東京駅 ｜ＪＲ東海",
+     "content": "運賃・経路・時刻表 · アクセス検索 · 各駅の時刻表 · 東海道・山陽新幹線の時刻表 · ＪＲ東海の路線図 · 空席情報 ..."
+    }
+   ]
+  },
+  {
+   "id": "ja-python",
+   "query": "python 入門 公式",
+   "gold_url": "https://docs.python.org/ja/3/tutorial",
+   "results": [
+    {
+     "url": "https://www.python.jp/train/index.html",
+     "title": "ゼロからの Python 入門講座",
+     "content": "この Python入門 講座では、プログラミング経験の未経験者・初心者を対象に、ブラウザから Python を実行できるサービスGoogle Colaboratory(Colab)を使って、 Python の基礎をチュートリアル形式で解説します。 Colab は、Googl"
+    },
+    {
+     "url": "https://progate.com/courses/python",
+     "title": "旧Python入門 | プログラミングの入門なら基礎から学べるProgate[プロゲート]",
+     "content": "このレッスンでは、複数のデータを管理する方法や、同じ処理を自動で繰り返す「繰り返し処理」といった、プログラミングで必須の知識を学びます。 Pythonの基本を身につけましょう！"
+    },
+    {
+     "url": "https://python.keicode.com/lang/",
+     "title": "Python の基本 - Python 入門",
+     "content": "プログラミング言語 Python を始める人のための入門サイト。開発環境の設定方法、言語の基礎から少し発展的な話題まで、Python の基礎知識をわかりやすく整理しています。"
+    },
+    {
+     "url": "https://paiza.jp/works/python/new-primer",
+     "title": "新・Python入門編 | プログラミング学習サイト【paizaラーニング】",
+     "content": "本講座はプログラミング言語Pythonの入門編です。Pythonの基本について学習できるよう作られています。"
+    },
+    {
+     "url": "https://www.jikkyo.co.jp/book/detail/22510044/",
+     "title": "JOI 公式 テキスト Python で問題解決 | 実教出版ホームページ",
+     "content": "●情報オリンピック日本委員会主催の 入門 講座の 公式 テキスト。 情報オリンピック日本委員会のサイト https://www.ioi-jp.org/"
+    },
+    {
+     "url": "https://docs.python.org/ja/3/tutorial/",
+     "title": "Python チュートリアル — Python 3.15.2 ドキュメント",
+     "content": "このチュートリアルでは Python 言語とシステムの基本的な概念や機能を形式ばらずに紹介します。一般的なプログラミングの基礎知識があることを前提としています。実際に試せるように Python インタープリタを用意しておくと役立ちます。ただし、例はそれぞれ単独で理解できるので、オフラインで読むこともできます。"
+    },
+    {
+     "url": "https://utokyo-ipp.github.io/",
+     "title": "Python プログラミング 入門 — Python プログラミング 入門 documentation",
+     "content": "2-1. 文字列 (string) ; 文字列とインデックス · 文字列とスライス · 空文字列 · 文字列の検索 · ▲エスケープシーケンス · バックスラッシュの表示と入力 · 文字列の連結 · 文字列とメソッド · 文字列の比較演算 · 練習 · 初心者によくある誤解 — 変数と文字列の混乱 · 練習 · 練習の解答"
+    },
+    {
+     "url": "http://www.amazon.co.jp/o/ASIN/B07D6ZGH8W/gihyojp-22",
+     "title": "Amazon.co.jp: 3ステップでしっかり学ぶ Python 入門 eBook : 山田 祥寛, 山田 奈美: Kindl…",
+     "content": "You've subscribed to ! We will preorder your items within 24 hours of when they become available. When new books are released, we'll charge your default p…"
+    },
+    {
+     "url": "https://www.skillupai.com/blog/tech/about-python/",
+     "title": "【入門】 Python とは｜活用事例やメリット、できること、学習 ...",
+     "content": "2023年6月16日 · ここでは、Pythonの代表的な基本文法をいくつか紹介します。 変数 変数は、データを格納するための箱のような …"
+    },
+    {
+     "url": "https://www.isc.meiji.ac.jp/~be00085/Python3/index.html",
+     "title": "Python入門",
+     "content": "このページでは，C言語をひと通り学習した人向けに，ざっと Python3 の文法の基礎を説明します． Python言語はインタプリタ言語であるため，ソーティングや数値計算などの基本的な処理アルゴリズムを記述・実行すると，同じ内容をC言語で記述した方が圧倒的に高速である． したがって，Pythonではすでに用意されている様々なパッケージ・ライブラリを順次組み合わせて，それをスクリプト的に実行するような書き方が一般的である．"
+    }
+   ]
+  },
+  {
+   "id": "ja-rust",
+   "query": "rust プログラミング言語 公式",
+   "gold_url": "https://www.rust-lang.org/ja",
+   "results": [
+    {
+     "url": "https://rust-lang.org/ja/",
+     "title": "Rust プログラミング言語",
+     "content": "パフォーマンス ; Rust は非常に高速でメモリ効率が高くランタイムやガベージコレクタがないため、パフォーマンス重視のサービスを実装できますし、組込み機器上で実行したり他の 言語 との調和も簡単にできます。"
+    },
+    {
+     "url": "https://gihyo.jp/book/2024/978-4-297-14192-9",
+     "title": "Rustで作るプログラミング言語 | 技術評論社",
+     "content": "コンピュータサイエンス、とくにプログラミング言語そのものやコンパイラについての素養を得たいと考えている人 · 他言語でのプログラミング経験があり、Rustの習得に興味のある人。とくに、学習のための題材を探..."
+    },
+    {
+     "url": "https://github.com/",
+     "title": "GitHub - MrBearing/TheRustProgrammingLanguage: 「 プログラミング言語 Rust 公式 ガイド」を学習する際に作成し....",
+     "content": "「 プログラミング言語 Rust 公式 ガイド」を学習する際に作成した写経や、他メモなどの成果物をまとめます。 - MrBearing/TheRustProgrammingLanguage"
+    },
+    {
+     "url": "https://qiita.com/elipmoc101/items/3c8b6d8332a9019e578c",
+     "title": "プログラミング言語 Rust のススメ #C++ - Qiita",
+     "content": "導入 皆さんこんにちは。趣味で Rust を使ってコンパイラを作ってるらいパン粉です。 プログラミング言語 Rust の良さを雑にあっぴるしていきます。 では、早速cargo run！(このコマンドで Rust のプログラムが実行される) C,C のコードが出てくるので覚悟してくだ..."
+    },
+    {
+     "url": "https://rust-lang.org/ja/learn/",
+     "title": "Rustを学ぶ - Rustプログラミング言語",
+     "content": "「the book」としても親しまれているプログラミング言語Rustは、この言語の概観を基本原理から説明します。読み進める中で複数のプロジェクトを構築し、読み終わるまでにはこの言語の確かな理解が得られます。"
+    },
+    {
+     "url": "https://speakerdeck.com/helloyuk13/puroguraminguyan-yu-rustfalsegoshao-jie",
+     "title": "プログラミング言語 Rust のご紹介",
+     "content": "Zli x サイバーエージェント合同LT会にて発表した内容です。"
+    },
+    {
+     "url": "https://atmarkit.itmedia.co.jp/ait/articles/2204/13/news040.html",
+     "title": "プログラミング言語 の人気ランキング、順位変動は縮小傾向にある――RedMonkが調査：Dartが Rust に....",
+     "content": "RedMonkが発表した2022年第1四半期の プログラミング言語 ランキングによると、JavaScript、Python、Javaがトップ3を占めた。Kotlinや Rust の勢いにDartが追随していることも分かった。"
+    },
+    {
+     "url": "https://techtarget.itmedia.co.jp/tt/news/2401/25/news05.html",
+     "title": "C++でも Rust でもない プログラミング言語 「Carbon」とは？：TechTargetジャパンエンジニア読本集 - TechT....",
+     "content": "「Carbon」は、Googleが開発した プログラミング言語 だ。その目的は「C 」が抱える問題を解消することにある。CarbonはC やその他の プログラミング言語 と何が違い、どのような場面で役立つ可能性があるのか。"
+    },
+    {
+     "url": "https://wolfbash.hateblo.jp/entry/2017/07/30/193412",
+     "title": "第二 プログラミング言語 として Rust はオススメしません Nim をやるのです - 強まっていこう",
+     "content": "これから Rust 触ってみようかなぁと思っている方。やめておきましょう。 プログラミング が嫌いになりますよ。 Nim をやりましょう。 すでに Rust に挑んで心ぶち折れた方。 Nim をやって心の傷を癒やしましょう。 Rust がディスられる！小癪な！と思っている方。 Nim をやるのです(天に轟く反響音)。 Nim の魅力を Rust と比較しつつ皆様へお伝えしましょう(両手を広げる)。 さ...."
+    },
+    {
+     "url": "https://ja.wikipedia.org/wiki/Rust_(%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%9F%E3%83%B3%E3%82%B0%E8%A8%80%E8%AA%9E)",
+     "title": "Rust (プログラミング言語) - Wikipedia",
+     "content": "Rust（ラスト）は、性能、メモリ安全性、安全な並行性を目指して設計されたマルチパラダイムのプログラミング言語である。C言語、C++に代わるシステムプログラミング言語を目指しており、構文的にはC++に似ているが..."
+    }
+   ]
+  },
+  {
+   "id": "ja-jma",
+   "query": "気象庁 天気予報",
+   "gold_url": "https://www.jma.go.jp",
+   "results": [
+    {
+     "url": "https://www.jma.go.jp/jma/index.html",
+     "title": "気象 庁 Japan Meteorological Agency",
+     "content": "令和8年7月7日掲載 世界気象機関（WMO）執行理事会第80回会合への出席 令和8年6月12日掲載 国土交通大臣から気象防災アドバ …"
+    },
+    {
+     "url": "https://www.jma.go.jp/bosai/forecast/",
+     "title": "気象 庁｜ 天気 予報",
+     "content": "気象庁の天気予報ページでは、全国や地方の向こう1週間の天気を表形式で確認できます。"
+    },
+    {
+     "url": "https://www.jma.go.jp/bosai/map.html#contents=forecast",
+     "title": "気象庁｜天気予報",
+     "content": "申し訳ございません。ページの読み込みに失敗しました。 通信状況によってはこのページが表示されることがありますので、その場合はリロードをお願いします。 · N o w L o a d i n g . ."
+    },
+    {
+     "url": "https://www.otenki.com/0001_day_top.htm",
+     "title": "気象庁天気予報｜ お天気.com",
+     "content": "気象庁発表の天気予報はこちら。気象庁の天気予報に加えて、概況なども確認できます。そのほか、独自のピンポイントの1時間天気、10日間天気、30日間天気なども確認する事ができます。"
+    },
+    {
+     "url": "https://www.jma.go.jp/jma/kishou/know/kurashi/yoho.html",
+     "title": "天気予報 | 気象庁",
+     "content": "一般的に皆さんが天気予報と呼んでいるもので、正式には「府県天気予報」といいます。「府県予報区」を地域ごとに細分した「一次細分区域」単位で、毎日5時、11時、17時に発表します。また、天気が急変したときには随時修正して発表します。発表内容は、今日・明日・明後日の天気と風と波、明日までの6時間ごとの降水確率と最高・最低気温の予想です。「府県予報区」と「一次細分区域」について詳細は「警報・注意報や天気予報の発表区域」のページをご参照ください。 · 気象庁ホームページに掲載している府県天気予報の例"
+    },
+    {
+     "url": "https://www.bosai.yomiuri.co.jp/feature/2363",
+     "title": "天気予報 ・ 気象庁 が国交省と一緒に避難を呼びかける",
+     "content": ""
+    },
+    {
+     "url": "https://apps.apple.com/jp/app/%E5%A4%A9%E6%B0%97%E4%BA%88%E5%A0%B1-%E6%B0%97%E8%B1%A1%E5%BA%81/id1546171987",
+     "title": "天気予報 - 気象庁 -アプリ - App Store - Apple",
+     "content": "・明日の天気、週間天気を簡単にチェック！ ・全国の10日間天気予報で事前にチェック・外出先でも、その現在地から気象庁レーダー雨・雪・天気を表示することができます ..."
+    },
+    {
+     "url": "https://www.data.jma.go.jp/multi/yoho/index.html?lang=jp",
+     "title": "気象庁 | 天気予報",
+     "content": "topへ"
+    },
+    {
+     "url": "https://www.jma.go.jp/bosai/weather_map/",
+     "title": "気象庁 | 天気図",
+     "content": "実況天気図、48時間先までの予報天気図をご覧いただけます。"
+    },
+    {
+     "url": "https://tenki.jp/",
+     "title": "日本 気象 協会 tenki.jp / 全国の 天気 予報・地震・台風",
+     "content": "21 時間前 · 世界の主要都市の天気 29日05:00 (日本時)発表 ホノルル 26℃/23℃ ソウル 15℃/5℃ グアム 31℃/28℃ 台北 25℃/20℃ …"
+    }
+   ]
+  },
+  {
+   "id": "ja-ndl",
+   "query": "国立国会図書館 サーチ",
+   "gold_url": "https://ndlsearch.ndl.go.jp",
+   "results": [
+    {
+     "url": "https://dl.ndl.go.jp/",
+     "title": "国立国会図書館 デジタルコレクション",
+     "content": "国立国会図書館 デジタルコレクションは、 国立国会図書館 で収集・保存しているデジタル資料を検索・閲覧できるサービスです。"
+    },
+    {
+     "url": "https://www.ndl.go.jp/",
+     "title": "国立国会図書館",
+     "content": "国立国会図書館 の公式ウェブサイトです。当館は、国内外の資料・情報を広く収集・保存して、知識・文化の基盤となり、 国会 の活動を補佐するとともに、行政・司法及び国民に 図書館 サービスを提供しています。"
+    },
+    {
+     "url": "https://iss.ndl.go.jp/",
+     "title": "国立国会図書館サーチ （NDLサーチ）",
+     "content": "2023年10月10日 · 国立国会図書館の資料を検索して閲覧や複写を申し込んだり、全国の図書館の所蔵資料を検索したりすることができます。"
+    },
+    {
+     "url": "https://ndlsearch.ndl.go.jp/rnavi/plan/post_1014",
+     "title": "国立国会図書館サーチで検索できる目次データ | リサーチ・ナビ",
+     "content": "資料種別をすべて選択して、「キーワード」欄から検索すると、全種類の目次データを検索することができます。 検索結果が多すぎる場合は、検索語を追加し ..."
+    },
+    {
+     "url": "https://www.lib.u-tokyo.ac.jp/ja/library/contents/database/185",
+     "title": "国立国会図書館サーチ （NDLサーチ） - 東京大学附属図書館",
+     "content": "国立国会図書館の所蔵資料やデジタル資料を検索したり、閲覧やコピーを申し込んだり、様々なサービスが利用できます。また、国立国会図書館とデータ連携している全国の ..."
+    },
+    {
+     "url": "https://ndlsearch.ndl.go.jp/bib/ndlcat",
+     "title": "国立国会図書館 蔵書目録データ検索 - NDL サーチ",
+     "content": "2023年9月29日 · 国立国会図書館が所蔵する有形の資料の書誌データを検索できます。 検索結果を、MARC等の形式でダウンロードするこ …"
+    },
+    {
+     "url": "http://iss.ndl.go.jp/somoku/",
+     "title": "国立国会図書館総合目録ネットワーク | NDLサーチ | 国立国会図書館",
+     "content": ""
+    },
+    {
+     "url": "https://rnavi.ndl.go.jp/",
+     "title": "リ サーチ ・ナビ | 国立国会図書館",
+     "content": "調査のポイントや参考資料、専門室の情報、便利なデータベースの紹介、使えるWebサイトの案内など、調べものに役立つ情報を提供しています。"
+    },
+    {
+     "url": "https://current.ndl.go.jp/e1087",
+     "title": "E1087 – 統合検索サービス「国立国会図書館サーチ」開発版が ...",
+     "content": "国立国会図書館サーチとは，NDLが提供するコンテンツに加え，全国の公共図書館，公文書館，美術館や学術情報機関等の書誌データ，デジタルコンテンツを ..."
+    },
+    {
+     "url": "https://ndlsearch.ndl.go.jp/",
+     "title": "国立国会図書館サーチ （NDL サーチ ）",
+     "content": "国立国会図書館 の資料を検索して閲覧や複写を申し込んだり、全国の 図書館 の所蔵資料を検索したりすることができます。"
+    }
+   ]
+  },
+  {
+   "id": "ja-tokyo-tourism",
+   "query": "東京 観光 公式",
+   "gold_url": "https://www.gotokyo.org",
+   "results": [
+    {
+     "url": "https://www.gotokyo.org/en/index.html",
+     "title": "東京観光 情報センター／ 東京 の 観光公式 サイトGO TOKYO",
+     "content": "東京 の 観光 案内所では、市内各地の便利な場所に、無料の多言語対応 観光 情報、地図、Wi-Fiを提供しています。"
+    },
+    {
+     "url": "https://www.tcvb.or.jp/jp/project/hasshin/welcome/",
+     "title": "東京の観光公式ガイド「東京トラベルガイド」のご案内／TCVB 公益財団法人 東京観光財団",
+     "content": "ページの先頭です · ここから本文です。"
+    },
+    {
+     "url": "https://www.gotokyo.org/jp/index.html",
+     "title": "GO TOKYO 東京の観光公式サイト",
+     "content": "本文へスキップします。 · What’s New in Tokyo"
+    },
+    {
+     "url": "https://www.gotokyo.org/jp/plan/tourist-info-center/index.html",
+     "title": "東京観光情報センター／東京の観光公式サイトGO TOKYO",
+     "content": "本文へスキップします。 · GO TOKYO 東京の観光公式サイト"
+    },
+    {
+     "url": "https://www.hatobus.co.jp/",
+     "title": "東京観光 ベストセラー｜はとバス【 公式 】",
+     "content": "東京観光 バスツアー！浅草、 東京 スカイツリー、皇居、 東京 タワー、 東京 夜景など1日コースから、半日、短時間コースまで！オープンバスも人気です。"
+    },
+    {
+     "url": "https://www.tickets.gotokyo.org/jp/",
+     "title": "Tokyo Events and Tickets／ 東京 の 観光公式 サイトGO TOKYO",
+     "content": "歌舞伎鑑賞、相撲観戦、各種体験や公演等のチケット情報を掲載した 東京 都オフィシャル 観光 サイト。"
+    },
+    {
+     "url": "https://www.gotokyo.org/jp/destinations/index.html",
+     "title": "東京エリアガイド／東京の観光公式サイトGO TOKYO",
+     "content": "本文へスキップします。 · GO TOKYO 東京の観光公式サイト"
+    },
+    {
+     "url": "https://www.hatobus.co.jp/feature/tokyo",
+     "title": "東京観光ベストセラー｜はとバス【公式】",
+     "content": "2027.3/31までの毎日（運休日あり） · おすすめポイント"
+    },
+    {
+     "url": "https://travel.rakuten.co.jp/mytrip/ranking/spot-tokyo",
+     "title": "【2026年最新】東京観光おすすめスポット76選！名所 穴場 最新スポット完全網羅 【楽天トラベル】",
+     "content": "宿・航空券・ツアー予約 · 東京観光の見どころスポットをエリア別にまとめてご紹介！東京のランドマークはもちろん、下町情緒が残る名所、おしゃれな最新スポットなど東京旅行や都内のデートで外せない観光スポ..."
+    },
+    {
+     "url": "https://www.gotokyo.org/jp/plan/useful-apps/index.html",
+     "title": "便利なアプリ／東京の観光公式サイト ...",
+     "content": "東京観光に役立つおすすめアプリをご紹介。ナビゲーションや交通機関、翻訳、安全対策、ホテル予約まで、GO TOKYOがおすすめする公式アプリをまとめ ..."
+    }
+   ]
+  }
+ ]
+}
