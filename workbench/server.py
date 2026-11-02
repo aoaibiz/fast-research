@@ -176,7 +176,11 @@ class Uploads:
     to stay open for the minutes a full library takes). Files live in <data>/restore-uploads (0700/0600) and go away when done.
     Disk: what every upload still has to write (declared size - received), what a restore sent whole is writing and what a backup in
     the making may write are counted together, with HEADROOM, against the free space before anything new starts (a full disk stops the
-    whole box). An upload nobody touched for IDLE seconds is let go, with its file, by whatever asks next."""
+    whole box). An upload nobody touched for IDLE seconds is let go, with its file, by whatever asks next.
+    One upload at a time: every upload has its own lock, and it is held while a piece is written, while its state changes and while its
+    file is removed. The state changes in one place, _move(); a state that ends the file's life (done, failed, dropped) removes the file
+    there, and a piece or a finish that finds the upload dropped is refused (the file is opened without O_CREAT, so a file that was
+    removed is never made again). Lock order: Uploads.lock (the table and the counting), then an upload's lock; never the reverse."""
     CHUNK=8*1024*1024;IDLE=3600;HEADROOM=64*1024*1024
     def __init__(self,directory,store):
         self.dir=Path(directory);self.dir.mkdir(mode=0o700,exist_ok=True);os.chmod(self.dir,0o700);self.store=store
@@ -185,9 +189,16 @@ class Uploads:
         self.items={};self.holds={};self.lock=threading.Lock();self.running=threading.Lock()
     def new_file(self,prefix):
         path=self.dir/f'{prefix}-{secrets.token_hex(16)}';os.close(os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600));return path
-    def _drop(self,token):
-        item=self.items.pop(token,None)
-        if item:item['path'].unlink(missing_ok=True)
+    def _move(self,item,to,expect=None,**fields):
+        """The one place an upload's state changes. False (nothing changed) when `expect` is given and the upload is not in one of those states."""
+        with item['lock']:
+            if expect is not None and item['state'] not in expect:return False
+            item.update(fields);item['state']=to
+            if to in ('done','failed','dropped'):item['path'].unlink(missing_ok=True)
+            return True
+    def _drop(self,token):  # call with self.lock held
+        item=self.items.get(token)
+        if item and self._move(item,'dropped',expect=('uploading','done','failed')):del self.items[token]
     def _expire(self,now):  # call with self.lock held
         for token,item in list(self.items.items()):
             if item['state']!='restoring' and now-item['touched']>self.IDLE:self._drop(token)
@@ -210,41 +221,56 @@ class Uploads:
                 if item['owner']==owner and item['state']=='uploading':self._drop(token)  # the person's earlier upload is given up
             self._expire(now);self._check(size)
             token=secrets.token_hex(16)
-            self.items[token]={'owner':owner,'path':self.new_file('restore'),'size':size,'received':0,'state':'uploading','touched':now,'lock':threading.Lock()}
+            self.items[token]={'owner':owner,'path':self.new_file('restore'),'size':size,'received':0,'state':'uploading','touched':now,'lock':threading.RLock()}
         return {'ok':True,'upload':token,'size':size,'chunk_bytes':self.CHUNK}
     def get(self,owner,token):
         with self.lock:
             self._expire(time.monotonic())
             item=self.items.get(token)
             return item if item and item['owner']==owner else None
+    def status(self,owner,token):
+        """The state the screen asks for: a copy taken under the upload's lock, or None when there is no such upload (any more)."""
+        item=self.get(owner,token)
+        if not item:return None
+        with item['lock']:
+            if item['state']=='dropped':return None
+            state={'state':item['state'],'size':item['size'],'received':item['received']}
+            if item['state']=='done':state['restored']=item['restored']
+            if item['state']=='failed':state['code']=item['code']
+            return state
     def append(self,owner,token,offset,data):
         item=self.get(owner,token)
         if not item:raise ResearchError('not_found','authorization',404)
         with item['lock']:
+            if item['state']=='dropped':raise ResearchError('not_found','authorization',404)  # given up while this piece was on its way
             if item['state']!='uploading' or offset!=item['received']:raise ResearchError('invalid_request','input',409)
             if item['received']+len(data)>item['size']:raise ResearchError('invalid_request','input',413)
-            with open(item['path'],'ab') as f:f.write(data)
+            try:fd=os.open(item['path'],os.O_WRONLY|os.O_APPEND)  # no O_CREAT: a file that is gone is not made again
+            except FileNotFoundError:raise ResearchError('not_found','authorization',404) from None
+            with os.fdopen(fd,'ab') as f:f.write(data)
             item['received']+=len(data);item['touched']=time.monotonic()
             return item['received']
     def finish(self,owner,token):
         item=self.get(owner,token)
         if not item:raise ResearchError('not_found','authorization',404)
         with item['lock']:
+            if item['state']=='dropped':raise ResearchError('not_found','authorization',404)
             if item['state']!='uploading':return item['state']  # sent again (the answer to the first was lost): it is not started twice
             if item['received']!=item['size']:raise ValueError('invalid_backup')
             if not self.running.acquire(blocking=False):raise ResearchError('rate_limited','input',429)
-            item['state']='restoring'
+            self._move(item,'restoring')
         threading.Thread(target=self._run,args=(item,),name='restore',daemon=True).start()
         return 'restoring'
     def _run(self,item):
+        outcome=('failed',{'code':'unexpected_error'})
         try:
-            with open(item['path'],'rb') as f:item['restored']=self.store.restore_stream(item['owner'],f)
-            item['state']='done'
-        except ValueError as error:item['state']='failed';item['code']=str(error) if str(error) in MESSAGES else 'invalid_backup'
-        except sqlite3.Error:item['state']='failed';item['code']='storage_error'
-        except Exception:item['state']='failed';item['code']='unexpected_error'
+            with open(item['path'],'rb') as f:outcome=('done',{'restored':self.store.restore_stream(item['owner'],f)})
+        except ValueError as error:outcome=('failed',{'code':str(error) if str(error) in MESSAGES else 'invalid_backup'})
+        except sqlite3.Error:outcome=('failed',{'code':'storage_error'})
+        except Exception:pass
         finally:
-            item['path'].unlink(missing_ok=True);item['touched']=time.monotonic();self.running.release()
+            try:self._move(item,outcome[0],touched=time.monotonic(),**outcome[1])
+            finally:self.running.release()
     def restore_now(self,owner,path):
         """The one-request restore (a backup sent whole): the same reader, while the caller waits."""
         if not self.running.acquire(blocking=False):raise ResearchError('rate_limited','input',429)
@@ -513,12 +539,10 @@ class Handler(BaseHTTPRequestHandler):
             if upload and len(upload)==2 and upload[1]=='finish' and method=='POST':
                 return self.send(202,{'ok':True,'state':self.app.uploads.finish(owner,upload[0])})
             if upload and len(upload)==1 and method=='GET':
-                item=self.app.uploads.get(owner,upload[0])
-                if not item:return self.fail(404,'not_found','authorization')
-                state={'ok':True,'state':item['state'],'size':item['size'],'received':item['received']}
-                if item['state']=='done':state['restored']=item['restored']
-                if item['state']=='failed':state['error']={'code':item['code'],'message':self.message(item['code'])}
-                return self.send(200,state)
+                state=self.app.uploads.status(owner,upload[0])
+                if not state:return self.fail(404,'not_found','authorization')
+                if state['state']=='failed':state['error']={'code':state['code'],'message':self.message(state.pop('code'))}
+                return self.send(200,{'ok':True,**state})
             if path=='/api/operations' and method=='GET':
                 healthy=False
                 try:

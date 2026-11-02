@@ -5,7 +5,9 @@ import http.client
 import io
 import json
 import os
+import random
 import sqlite3
+import sys
 import tempfile
 import threading
 import time
@@ -17,6 +19,7 @@ from unittest import mock
 from . import digest, mcp, notes
 from .agent import PrivateNotes, config
 from . import server as server_module
+from .core import ResearchError
 from .server import App, MAX_INPUT, Server, Uploads
 from .store import Store
 
@@ -353,10 +356,12 @@ class UploadCapacityTests(unittest.TestCase):
                          'Content-Type': 'application/json', 'Content-Length': str(len(body))}.items():
                 conn.putheader(k, v)
             conn.endheaders(); conn.send(body[:100])
-            for _ in range(100):
+            for _ in range(600):  # a loaded box can take seconds to get the request as far as its spool file
                 if any(f.name.startswith('single-') for f in self.app.uploads.dir.iterdir()):
                     break
                 time.sleep(0.05)
+            else:
+                self.fail('the whole-restore request never reached its spool file')
             self.assertEqual(self.start(self.h.sb, 1_100)[1].get('error', {}).get('code'), 'storage_error', 'the whole-restore body on its way (about 480) + 1100 + 100 > 1600')
             conn.send(body[100:]); response = conn.getresponse(); self.assertEqual(response.status, 200); response.read(); conn.close()
             self.assertEqual(self.start(self.h.sb, 1_100)[0], 200, 'its room is given back when it ends: 1100 + 100 <= 1600')
@@ -423,6 +428,123 @@ class FinishCanBeSentAgainTests(unittest.TestCase):
             self.assertEqual((failed['state'], failed['error']['code']), ('failed', 'invalid_backup'))
             self.assertEqual(self.h.call(base + '/finish', {}, self.h.sa), (202, {'ok': True, 'state': 'failed'}))
         self.assertEqual(len(calls), 1)
+
+
+class UploadRaceTests(unittest.TestCase):
+    """Review 002 F1: a piece being written and the upload being given up (by the same person starting again, or by the idle time) are
+    one at a time. A given-up upload's file is never made again, and what is on disk is always exactly what is counted."""
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix='fr-race-')
+        self.roomy = disk_free(10 ** 12)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def uploads(self, name, store=None):
+        return Uploads(Path(self.tmp.name) / name, store)
+
+    def files(self, uploads):
+        return sorted(f.name for f in uploads.dir.iterdir())
+
+    def live(self, uploads):
+        return sorted(i['path'].name for i in uploads.items.values() if i['state'] in ('uploading', 'restoring'))
+
+    def test_a_piece_that_was_on_its_way_when_the_upload_was_given_up_is_refused_and_leaves_no_file(self):
+        a, b = self.roomy
+        with a, b:
+            uploads = self.uploads('hook'); first = uploads.start('p', 1000)['upload']
+            real = Uploads.get; fired = []
+
+            def get(self_, owner, token):
+                item = real(self_, owner, token)
+                if token == first and not fired:  # the same person starts again right after the piece found its upload
+                    fired.append(self_.start('p', 1000)['upload'])
+                return item
+            with mock.patch.object(Uploads, 'get', get):
+                with self.assertRaises(ResearchError) as caught:
+                    uploads.append('p', first, 0, b'x' * 100)
+            self.assertEqual((caught.exception.status, caught.exception.code), (404, 'not_found'))
+            self.assertEqual(self.files(uploads), self.live(uploads), 'only the live upload has a file')
+            self.assertEqual(len(self.files(uploads)), 1)
+            self.assertEqual(uploads.append('p', fired[0], 0, b'y' * 100), 100)
+
+    def test_finish_of_an_upload_that_was_given_up_on_its_way_is_refused_and_starts_nothing(self):
+        calls = []
+
+        class Store_:
+            def restore_stream(self, owner, f):
+                calls.append(owner); return 0
+        a, b = self.roomy
+        with a, b:
+            uploads = self.uploads('hookfin', Store_()); first = uploads.start('p', 10)['upload']
+            uploads.append('p', first, 0, b'0123456789')
+            real = Uploads.get; fired = []
+
+            def get(self_, owner, token):
+                item = real(self_, owner, token)
+                if token == first and not fired:
+                    fired.append(self_.start('p', 10)['upload'])
+                return item
+            with mock.patch.object(Uploads, 'get', get):
+                with self.assertRaises(ResearchError) as caught:
+                    uploads.finish('p', first)
+            self.assertEqual(caught.exception.status, 404)
+            time.sleep(0.2)
+            self.assertEqual(calls, [], 'no restore was started from a file that was given up')
+            self.assertEqual(self.files(uploads), self.live(uploads))
+
+    def test_start_and_append_in_random_order_from_many_threads_leave_no_orphan_and_one_account(self):
+        seed = int(os.environ.get('FAST_RESEARCH_SEED') or random.SystemRandom().randrange(10 ** 9))
+        interval = sys.getswitchinterval(); sys.setswitchinterval(1e-6)  # threads change over after almost every instruction: the narrow windows are hit
+        self.addCleanup(sys.setswitchinterval, interval)
+        real_get = Uploads.get; delays = random.Random(seed ^ 0x5EED)
+
+        def slow_get(self_, owner, token):  # a pause between finding the upload and using it (the seam the race lives in)
+            item = real_get(self_, owner, token)
+            time.sleep(delays.random() * 0.0004)
+            return item
+        patch = mock.patch.object(Uploads, 'get', slow_get); patch.start(); self.addCleanup(patch.stop)
+        for round_ in range(30):
+            a, b = self.roomy
+            with a, b:
+                uploads = self.uploads(f'round{round_}'); rng = random.Random(seed + round_); problems = []
+                latest = {}; barrier = threading.Barrier(4)
+
+                def starter(owner, rnd):
+                    barrier.wait()
+                    for _ in range(60):
+                        try:
+                            latest[owner] = uploads.start(owner, rnd.randrange(2_000, 9_000))['upload']
+                        except Exception as error:
+                            problems.append(('start', owner, repr(error)))
+                        time.sleep(rnd.random() * 0.0002)
+
+                def appender(owner, rnd):
+                    barrier.wait()
+                    for _ in range(120):
+                        token = latest.get(owner)
+                        if token is None:
+                            continue
+                        try:
+                            item = uploads.items.get(token)  # progress as the sender last saw it (racy on purpose)
+                            offset = (item['received'] if item else 0) + rnd.choice([0, 0, 0, 1])
+                            uploads.append(owner, token, offset, b'z' * rnd.randrange(1, 1_500))
+                        except ResearchError as error:
+                            if error.status not in (404, 409, 413):
+                                problems.append(('append', owner, repr(error)))
+                        except Exception as error:  # a file that is not there, a closed handle ...
+                            problems.append(('append', owner, repr(error)))
+                workers = [threading.Thread(target=fn, args=(owner, random.Random(rng.random()))) for owner in ('p', 'q') for fn in (starter, appender)]
+                [w.start() for w in workers]; [w.join(60) for w in workers]
+                self.assertFalse(any(w.is_alive() for w in workers), f'a thread is stuck (seed {seed}, round {round_})')
+                self.assertEqual(problems, [], f'seed {seed}, round {round_}')
+                self.assertEqual(self.files(uploads), self.live(uploads), f'a file nobody counts (seed {seed}, round {round_})')
+                with uploads.lock:
+                    counted = uploads._reserved()
+                on_disk = sum(i['size'] - (i['path'].stat().st_size) for i in uploads.items.values() if i['state'] == 'uploading')
+                self.assertEqual(counted, on_disk, f'the counted room is what is still to come (seed {seed}, round {round_})')
+                for i in uploads.items.values():
+                    self.assertEqual(i['path'].stat().st_size, i['received'], f'every counted byte is on disk and nothing else (seed {seed}, round {round_})')
 
 
 class NotesTests(unittest.TestCase):
