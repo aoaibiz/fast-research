@@ -394,6 +394,15 @@ class Store:
             reports=[{'payload':json.loads(r['payload']),'created':r['created']} for r in db.execute('SELECT payload,created FROM reports WHERE owner=?',(owner,))]
         return {'format':'rustxng-private-backup-v1','documents':self.documents(owner,True),'preferences':self.preferences(owner),'reports':reports}
 
+    def backup_size_bound(self, owner):
+        """What a backup file of this owner may come to: the text of their documents and saved research twice over (JSON escapes
+        grow it; a 300MB library of backslash-heavy text made 596MB) plus a little per document. Used to keep room for it."""
+        with self.connect() as db:
+            used = self._bytes_used(db, owner)
+            reports = db.execute('SELECT coalesce(sum(length(payload)),0) FROM reports WHERE owner=?', (owner,)).fetchone()[0]
+            count = db.execute('SELECT count(*) FROM documents WHERE owner=?', (owner,)).fetchone()[0]
+        return 2 * (used + reports) + 256 * (count + 1)
+
     def export_to(self, owner, out):
         """The same backup as export(), written to a binary file one document at a time (a 300MB library is never one string)."""
         preferences = self.preferences(owner)

@@ -173,31 +173,48 @@ def parse_public_origin(value):
 class Uploads:
     """A backup restore in pieces: start (declared size) -> pieces in order (each <= MAX_INPUT, so a tunnel's request cap does not
     matter) -> finish, which restores from the file on disk in a background thread (the screen asks for the state; no request has
-    to stay open for the minutes a full library takes). Files live in <data>/restore-uploads (0700/0600) and go away when done."""
+    to stay open for the minutes a full library takes). Files live in <data>/restore-uploads (0700/0600) and go away when done.
+    Disk: what every upload still has to write (declared size - received), what a restore sent whole is writing and what a backup in
+    the making may write are counted together, with HEADROOM, against the free space before anything new starts (a full disk stops the
+    whole box). An upload nobody touched for IDLE seconds is let go, with its file, by whatever asks next."""
     CHUNK=8*1024*1024;IDLE=3600;HEADROOM=64*1024*1024
     def __init__(self,directory,store):
         self.dir=Path(directory);self.dir.mkdir(mode=0o700,exist_ok=True);os.chmod(self.dir,0o700);self.store=store
         for leftover in self.dir.iterdir():  # pieces / exports of a previous run of the server
             if leftover.is_file() and not leftover.is_symlink():leftover.unlink()
-        self.items={};self.lock=threading.Lock();self.running=threading.Lock()
+        self.items={};self.holds={};self.lock=threading.Lock();self.running=threading.Lock()
     def new_file(self,prefix):
         path=self.dir/f'{prefix}-{secrets.token_hex(16)}';os.close(os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600));return path
-    def room_for(self,size):
-        if shutil.disk_usage(self.dir).free<size+self.HEADROOM:raise ResearchError('storage_error','storage',507)
     def _drop(self,token):
         item=self.items.pop(token,None)
         if item:item['path'].unlink(missing_ok=True)
+    def _expire(self,now):  # call with self.lock held
+        for token,item in list(self.items.items()):
+            if item['state']!='restoring' and now-item['touched']>self.IDLE:self._drop(token)
+    def _reserved(self):  # call with self.lock held: what is still to be written by uploads and by whole restores / backups in flight
+        return sum(max(i['size']-i['received'],0) for i in self.items.values() if i['state']=='uploading')+sum(self.holds.values())
+    def _check(self,size):  # call with self.lock held
+        if shutil.disk_usage(self.dir).free<self._reserved()+size+self.HEADROOM:raise ResearchError('storage_error','storage',507)
+    def reserve(self,size):
+        """Room for a file of up to `size` bytes that a request is about to write (a restore sent whole, a backup); release() ends it."""
+        with self.lock:
+            self._expire(time.monotonic());self._check(size)
+            token=secrets.token_hex(16);self.holds[token]=size
+        return token
+    def release(self,token):
+        with self.lock:self.holds.pop(token,None)
     def start(self,owner,size):
-        self.room_for(size)
         with self.lock:
             now=time.monotonic()
             for token,item in list(self.items.items()):
-                if (item['owner']==owner and item['state']=='uploading') or (item['state']!='restoring' and now-item['touched']>self.IDLE):self._drop(token)
+                if item['owner']==owner and item['state']=='uploading':self._drop(token)  # the person's earlier upload is given up
+            self._expire(now);self._check(size)
             token=secrets.token_hex(16)
             self.items[token]={'owner':owner,'path':self.new_file('restore'),'size':size,'received':0,'state':'uploading','touched':now,'lock':threading.Lock()}
         return {'ok':True,'upload':token,'size':size,'chunk_bytes':self.CHUNK}
     def get(self,owner,token):
         with self.lock:
+            self._expire(time.monotonic())
             item=self.items.get(token)
             return item if item and item['owner']==owner else None
     def append(self,owner,token,offset,data):
@@ -213,10 +230,12 @@ class Uploads:
         item=self.get(owner,token)
         if not item:raise ResearchError('not_found','authorization',404)
         with item['lock']:
-            if item['state']!='uploading' or item['received']!=item['size']:raise ValueError('invalid_backup')
+            if item['state']!='uploading':return item['state']  # sent again (the answer to the first was lost): it is not started twice
+            if item['received']!=item['size']:raise ValueError('invalid_backup')
             if not self.running.acquire(blocking=False):raise ResearchError('rate_limited','input',429)
             item['state']='restoring'
         threading.Thread(target=self._run,args=(item,),name='restore',daemon=True).start()
+        return 'restoring'
     def _run(self,item):
         try:
             with open(item['path'],'rb') as f:item['restored']=self.store.restore_stream(item['owner'],f)
@@ -403,12 +422,14 @@ class Handler(BaseHTTPRequestHandler):
             if path in ('/api/accounts','/api/restart','/api/stop','/api/phone-link') and session['role']!='admin':return self.fail(403,'not_found','authorization')
             # Bodies that are not one JSON object: a restore sent whole (spooled to disk, then read one document at a time) and the pieces of a restore upload.
             if path=='/api/restore' and method=='POST':
-                length=self.length('application/json',self.app.restore_max);self.app.uploads.room_for(length)
-                spool=self.app.uploads.new_file('single')
+                length=self.length('application/json',self.app.restore_max);hold=self.app.uploads.reserve(length)
                 try:
-                    with open(spool,'wb') as f:self.read_into(f,length)
-                    return self.send(200,{'ok':True,'restored':self.app.uploads.restore_now(owner,spool)})
-                finally:spool.unlink(missing_ok=True)
+                    spool=self.app.uploads.new_file('single')
+                    try:
+                        with open(spool,'wb') as f:self.read_into(f,length)
+                        return self.send(200,{'ok':True,'restored':self.app.uploads.restore_now(owner,spool)})
+                    finally:spool.unlink(missing_ok=True)
+                finally:self.app.uploads.release(hold)
             upload=path[len('/api/restore/upload/'):].split('/') if path.startswith('/api/restore/upload/') else None
             if upload and len(upload)==1 and method=='POST':
                 try:offset=int(self.headers.get('X-Upload-Offset',''))
@@ -476,18 +497,21 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith('/api/reports/') and method=='GET':
                 report=self.app.store.report(owner,path.rsplit('/',1)[1]);return self.send(200,report) if report else self.fail(404,'not_found','authorization')
             if path=='/api/backup' and method=='GET':
-                spool=self.app.uploads.new_file('export')
+                hold=self.app.uploads.reserve(self.app.store.backup_size_bound(owner))
                 try:
-                    with open(spool,'wb') as f:self.app.store.export_to(owner,f)
-                    return self.send_file(spool,'application/json; charset=utf-8','rustxng-private-backup.json')
-                finally:spool.unlink(missing_ok=True)
+                    spool=self.app.uploads.new_file('export')
+                    try:
+                        with open(spool,'wb') as f:self.app.store.export_to(owner,f)
+                        return self.send_file(spool,'application/json; charset=utf-8','rustxng-private-backup.json')
+                    finally:spool.unlink(missing_ok=True)
+                finally:self.app.uploads.release(hold)
             if path=='/api/restore/upload' and method=='POST':
                 size=data.get('size')
                 if not isinstance(size,int) or isinstance(size,bool) or size<=0:raise ResearchError('invalid_request','input',400)
                 if size>self.app.restore_max:raise ResearchError('invalid_request','input',413)
                 return self.send(200,self.app.uploads.start(owner,size))
             if upload and len(upload)==2 and upload[1]=='finish' and method=='POST':
-                self.app.uploads.finish(owner,upload[0]);return self.send(202,{'ok':True,'state':'restoring'})
+                return self.send(202,{'ok':True,'state':self.app.uploads.finish(owner,upload[0])})
             if upload and len(upload)==1 and method=='GET':
                 item=self.app.uploads.get(owner,upload[0])
                 if not item:return self.fail(404,'not_found','authorization')

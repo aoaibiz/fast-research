@@ -617,13 +617,17 @@ async function restoreInPieces(file) {
       await pause(1000 * misses); offset = (await api(base)).received;
     }
   }
-  await api(base + '/finish', {});
+  // finish may be sent again (the server starts the restore once): when its answer is lost the screen asks for the state and goes on from there
+  let finishError = null, resends = 0;
+  const finish = async () => { try { await api(base + '/finish', {}); finishError = null; } catch (e) { if (e.status && e.status < 500) throw e; finishError = e; } };
+  await finish();
   for (misses = 0; ; ) {
     await pause(1000);
     let s;
     try { s = await api(base); misses = 0; } catch (e) { if ((e.status && e.status < 500) || ++misses > 60) throw e; continue; }
     if (s.state === 'done') return s;
     if (s.state === 'failed') throw Error(s.error.message);
+    if (s.state === 'uploading') { if (++resends > 5) throw finishError || Error('処理に失敗しました。'); await finish(); }  // finish never arrived
   }
 }
 $('#account-form').addEventListener('submit', e => {

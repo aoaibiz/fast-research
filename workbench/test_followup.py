@@ -10,11 +10,14 @@ import tempfile
 import threading
 import time
 import unittest
+from collections import namedtuple
 from pathlib import Path
+from unittest import mock
 
 from . import digest, mcp, notes
 from .agent import PrivateNotes, config
-from .server import App, MAX_INPUT, Server
+from . import server as server_module
+from .server import App, MAX_INPUT, Server, Uploads
 from .store import Store
 
 SECRET_GH = 'gh' + 'p_' + 'A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8'
@@ -286,6 +289,140 @@ class RestoreTests(unittest.TestCase):
             self.assertEqual(h.raw('POST', '/api/restore', backup, h.sa, timeout=1800), (200, {'ok': True, 'restored': made}))
         finally:
             h.close()
+
+
+Disk = namedtuple('Disk', 'total used free')
+
+
+def disk_free(nbytes, headroom=1000):
+    """The disk as the server sees it: `nbytes` free (a constant, whatever is written), and a small safety margin."""
+    return mock.patch.multiple(server_module.shutil, disk_usage=mock.Mock(return_value=Disk(10 ** 12, 10 ** 12 - nbytes, nbytes))), mock.patch.object(Uploads, 'HEADROOM', headroom)
+
+
+class UploadCapacityTests(unittest.TestCase):
+    """Review 001 F2: what several people are sending at the same time is counted together, and what is given up is let go."""
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix='fr-cap-')
+        self.h = Http(Path(self.tmp.name) / 'cap')
+        self.app.store.register('Synthetic C', 'fixture-password-2026-C', False)
+        self.sc = self.app.store.login('Synthetic C', 'fixture-password-2026-C')
+
+    app = property(lambda self: self.h.app)
+
+    def tearDown(self):
+        self.h.close(); self.tmp.cleanup()
+
+    def start(self, session, size):
+        return self.h.call('/api/restore/upload', {'size': size}, session)
+
+    def test_uploads_started_by_different_people_are_counted_together_and_let_go_when_given_up(self):
+        a, b = disk_free(10_000)
+        with a, b:
+            first = self.start(self.h.sa, 4_000)
+            self.assertEqual(first[0], 200)
+            self.assertEqual(self.start(self.h.sb, 6_000)[1].get('error', {}).get('code'), 'storage_error', '4000 + 6000 + 1000 of margin does not fit in 10000')
+            self.assertEqual(self.start(self.h.sb, 5_000)[0], 200, '4000 + 5000 + 1000 fits')
+            third = self.start(self.sc, 1_000)
+            self.assertEqual((third[0], third[1]['error']['code']), (507, 'storage_error'), '4000 + 5000 + 1000 + 1000 does not')
+            # the same person starting again gives up their own earlier upload (nothing is counted twice)
+            self.assertEqual(self.start(self.h.sb, 5_000)[0], 200)
+            # a person's upload nobody touched for the idle time is let go by the next start, with its file
+            old = self.app.uploads.items[first[1]['upload']]
+            old['touched'] -= Uploads.IDLE + 1
+            self.assertEqual(self.start(self.sc, 1_000)[0], 200, 'the abandoned 4000 no longer counts')
+            self.assertEqual(self.h.call('/api/restore/upload/' + first[1]['upload'], session=self.h.sa)[0], 404)
+            self.assertFalse(old['path'].exists())
+            self.assertEqual(len(list(self.app.uploads.dir.iterdir())), 2, 'only the two live uploads have a file')
+
+    def test_only_what_is_still_to_come_of_an_upload_is_counted(self):
+        a, b = disk_free(10_000)
+        with a, b:
+            up = self.start(self.h.sa, 6_000)[1]
+            octet = {'Content-Type': 'application/octet-stream'}
+            self.assertEqual(self.start(self.h.sb, 4_000)[0], 507, '6000 + 4000 + 1000 > 10000')
+            self.assertEqual(self.h.raw('POST', '/api/restore/upload/' + up['upload'], b'x' * 3_000, self.h.sa, {**octet, 'X-Upload-Offset': '0'})[0], 200)
+            self.assertEqual(self.start(self.h.sb, 4_000)[0], 200, '3000 still to come + 4000 + 1000 fits')
+
+    def test_a_restore_sent_whole_and_a_backup_in_the_making_hold_their_room_until_they_end(self):
+        a, b = disk_free(1_600, 100)
+        with a, b:
+            body = json.dumps({'format': 'rustxng-private-backup-v1', 'documents': [{'title': 'Orion whole', 'body': 'w' * 400}]}).encode()
+            conn = http.client.HTTPConnection('127.0.0.1', self.h.port, timeout=20)
+            conn.putrequest('POST', '/api/restore', skip_host=True)
+            for k, v in {'Host': f'localhost:{self.h.port}', 'Origin': self.app.origin, 'Cookie': 'rxsession=' + self.h.sa['token'], 'X-CSRF-Token': self.h.sa['csrf'],
+                         'Content-Type': 'application/json', 'Content-Length': str(len(body))}.items():
+                conn.putheader(k, v)
+            conn.endheaders(); conn.send(body[:100])
+            for _ in range(100):
+                if any(f.name.startswith('single-') for f in self.app.uploads.dir.iterdir()):
+                    break
+                time.sleep(0.05)
+            self.assertEqual(self.start(self.h.sb, 1_100)[1].get('error', {}).get('code'), 'storage_error', 'the whole-restore body on its way (about 480) + 1100 + 100 > 1600')
+            conn.send(body[100:]); response = conn.getresponse(); self.assertEqual(response.status, 200); response.read(); conn.close()
+            self.assertEqual(self.start(self.h.sb, 1_100)[0], 200, 'its room is given back when it ends: 1100 + 100 <= 1600')
+        a, b = disk_free(1_100, 100)
+        with a, b:
+            self.assertEqual(self.h.call('/api/backup', session=self.h.sa)[1].get('error', {}).get('code'), 'storage_error', 'a backup that cannot fit is not started')
+        a, b = disk_free(10_000_000, 100)
+        with a, b:
+            self.assertEqual(self.h.raw('GET', '/api/backup', session=self.h.sa)[0], 200)
+            self.assertEqual(self.start(self.h.sb, 9_000_000)[0], 200, 'and the export gave its room back')
+
+
+class FinishCanBeSentAgainTests(unittest.TestCase):
+    """Review 001 F1: a lost answer to finish must not make a running or finished restore look like a failure."""
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix='fr-fin-')
+        self.h = Http(Path(self.tmp.name) / 'fin')
+
+    def tearDown(self):
+        self.h.close(); self.tmp.cleanup()
+
+    def upload(self, session, body):
+        up = self.h.call('/api/restore/upload', {'size': len(body)}, session)[1]; base = '/api/restore/upload/' + up['upload']
+        self.assertEqual(self.h.raw('POST', base, body, session, {'Content-Type': 'application/octet-stream', 'X-Upload-Offset': '0'})[0], 200)
+        return base
+
+    def wait(self, base, session, until):
+        for _ in range(200):
+            state = self.h.call(base, session=session)[1]
+            if state['state'] in until:
+                return state
+            time.sleep(0.05)
+        self.fail('the restore did not reach ' + str(until))
+
+    def test_finish_again_while_restoring_and_after_done_restores_once(self):
+        body = json.dumps({'format': 'rustxng-private-backup-v1', 'documents': [{'title': 'Orion finish', 'body': 'finish body'}]}).encode()
+        base = self.upload(self.h.sa, body)
+        release = threading.Event(); real = Store.restore_stream; calls = []
+
+        def slow(store, owner, fileobj):
+            calls.append(owner); release.wait(20)
+            return real(store, owner, fileobj)
+        with mock.patch.object(Store, 'restore_stream', slow):
+            self.assertEqual(self.h.call(base + '/finish', {}, self.h.sa), (202, {'ok': True, 'state': 'restoring'}))
+            again = self.h.call(base + '/finish', {}, self.h.sa)
+            self.assertEqual(again, (202, {'ok': True, 'state': 'restoring'}), 'the same finish sent again while it runs is not an error')
+            self.assertEqual(self.h.call(base + '/finish', {}, self.h.sb)[0], 404, "someone else's upload")
+            release.set(); done = self.wait(base, self.h.sa, ('done', 'failed'))
+        self.assertEqual((done['state'], done['restored']), ('done', 1))
+        self.assertEqual(self.h.call(base + '/finish', {}, self.h.sa), (202, {'ok': True, 'state': 'done'}), 'and after it is done')
+        self.assertEqual((len(calls), self.h.call(base, session=self.h.sa)[1]['restored']), (1, 1), 'the library was restored once')
+        self.assertEqual([d['title'] for d in self.h.app.store.documents(self.h.a)], ['Orion finish'])
+
+    def test_finish_again_after_a_failed_restore_reports_the_failure_and_does_not_run_it_again(self):
+        base = self.upload(self.h.sa, b'{"format": "other", "documents": []}')
+        real = Store.restore_stream; calls = []
+
+        def counting(store, owner, fileobj):
+            calls.append(1)
+            return real(store, owner, fileobj)
+        with mock.patch.object(Store, 'restore_stream', counting):
+            self.assertEqual(self.h.call(base + '/finish', {}, self.h.sa)[0], 202)
+            failed = self.wait(base, self.h.sa, ('done', 'failed'))
+            self.assertEqual((failed['state'], failed['error']['code']), ('failed', 'invalid_backup'))
+            self.assertEqual(self.h.call(base + '/finish', {}, self.h.sa), (202, {'ok': True, 'state': 'failed'}))
+        self.assertEqual(len(calls), 1)
 
 
 class NotesTests(unittest.TestCase):
