@@ -1,5 +1,6 @@
 """Local account-scoped storage. No external connections or request-content logging."""
 import hashlib
+import collections
 import copy
 from contextlib import contextmanager
 import hmac
@@ -10,6 +11,13 @@ import secrets
 import sqlite3
 import time
 from pathlib import Path
+from .tokens import fts_text, fts_query, fts_query_all, terms
+
+# Private-document capacity (one person's tool: one set of limits, configurable from the server command line).
+DEFAULT_LIMITS = {'document_chars': 2_000_000, 'documents_per_owner': 10_000, 'document_bytes_per_owner': 300_000_000}
+# Imported bundles are split into "題名 2/5" or "題名(続き2)"; results keep one part per bundle first.
+BUNDLE_SUFFIX = re.compile(r'(\s+\d+/\d+|\(続き\d+\))$')
+FTS_SCHEMA = "CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5(owner UNINDEXED, doc UNINDEXED, title, body, tokenize='unicode61')"
 
 SCHEMA = '''
 CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, name TEXT UNIQUE NOT NULL, salt BLOB NOT NULL, digest BLOB NOT NULL, role TEXT NOT NULL);
@@ -26,14 +34,39 @@ LINK_SESSION_SECONDS = 30 * 24 * 3600  # a device that opened the link stays sig
 LINK_TOKEN = re.compile(r'[A-Za-z0-9_-]{43}')
 
 class Store:
-    def __init__(self, path):
+    def __init__(self, path, limits=None):
         self.path = Path(path)
+        self._used = {}  # owner -> bytes of documents; computed once from SQLite, then kept in step (a full scan per insert made 10,000 inserts quadratic)
+        self._listing = {}  # owner -> the document list (title / characters / created); length(body) over 300MB costs a second, so it is kept until a document is added
+        self.limits = {**DEFAULT_LIMITS, **{k: int(v) for k, v in (limits or {}).items() if k in DEFAULT_LIMITS and v}}
         self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         if self.path.is_symlink():
             raise ValueError('database_symlink_refused')
         with self.connect() as db:
             db.executescript(SCHEMA)
+            self.fts = self._ensure_index(db)
         os.chmod(self.path, 0o600)
+
+    def _ensure_index(self, db):
+        """FTS5 index for the private search; built once for rows that predate it. False when this SQLite lacks FTS5 (scan fallback)."""
+        try:
+            db.execute(FTS_SCHEMA)
+        except sqlite3.OperationalError:
+            return False
+        # Index rows share the document's rowid, so a search can read match lists by rowid alone (never an FTS content row).
+        # An index from an older layout (its own rowids) is rebuilt once.
+        aligned = db.execute('SELECT count(*) FROM documents_fts f JOIN documents d ON d.rowid=f.rowid AND d.id=f.doc').fetchone()[0]
+        if aligned != db.execute('SELECT count(*) FROM documents_fts').fetchone()[0]:
+            db.execute('DELETE FROM documents_fts')
+        missing = db.execute('SELECT rowid,id,owner,title,body FROM documents WHERE rowid NOT IN (SELECT rowid FROM documents_fts)')
+        for row in missing.fetchall():
+            db.execute('INSERT INTO documents_fts(rowid,owner,doc,title,body) VALUES(?,?,?,?,?)', (row['rowid'], row['owner'], row['id'], fts_text(row['title']), fts_text(row['body'])))
+        return True
+
+    def _index_document(self, db, owner, identifier, title, body):
+        self._listing.pop(owner, None)
+        if self.fts:
+            db.execute('INSERT INTO documents_fts(rowid,owner,doc,title,body) SELECT rowid,?,?,?,? FROM documents WHERE id=?', (owner, identifier, fts_text(title), fts_text(body), identifier))
 
     @contextmanager
     def connect(self):
@@ -140,7 +173,7 @@ class Store:
     def add_document(self, owner, title, body):
         if not isinstance(title, str) or not title.strip() or len(title) > 200:
             raise ValueError('invalid_title')
-        if not isinstance(body, str) or not body.strip() or len(body) > 100000:
+        if not isinstance(body, str) or not body.strip() or len(body) > self.limits['document_chars']:
             raise ValueError('document_length')
         title=title.strip()
         fingerprint = hashlib.sha256((title+'\0'+body).encode()).hexdigest()
@@ -149,18 +182,85 @@ class Store:
             row = db.execute('SELECT id FROM documents WHERE owner=? AND fingerprint=?', (owner,fingerprint)).fetchone()
             if row:
                 return row['id']
-            if db.execute('SELECT count(*) FROM documents WHERE owner=?', (owner,)).fetchone()[0] >= 500:
+            if db.execute('SELECT count(*) FROM documents WHERE owner=?', (owner,)).fetchone()[0] >= self.limits['documents_per_owner']:
                 raise ValueError('document_limit')
-            used=db.execute('SELECT coalesce(sum(length(CAST(title AS BLOB))+length(CAST(body AS BLOB))),0) FROM documents WHERE owner=?',(owner,)).fetchone()[0]
-            if used+len(title.encode())+len(body.encode())>1500000:raise ValueError('document_limit')
+            used=self._bytes_used(db, owner); added=len(title.encode())+len(body.encode())
+            if used+added>self.limits['document_bytes_per_owner']:raise ValueError('document_limit')
             identifier = secrets.token_hex(16)
             db.execute('INSERT INTO documents VALUES(?,?,?,?,?,?)', (identifier,owner,title.strip(),body,fingerprint,time.time()))
+            self._index_document(db, owner, identifier, title, body)
+            self._used[owner]=used+added
             return identifier
+
+    def _bytes_used(self, db, owner):
+        if owner not in self._used:
+            self._used[owner]=db.execute('SELECT coalesce(sum(length(CAST(title AS BLOB))+length(CAST(body AS BLOB))),0) FROM documents WHERE owner=?',(owner,)).fetchone()[0]
+        return self._used[owner]
 
     def documents(self, owner, full=False):
         with self.connect() as db:
-            rows = db.execute('SELECT id,title,body,created FROM documents WHERE owner=? ORDER BY created DESC', (owner,)).fetchall()
-            return [dict(r) if full else {'id':r['id'],'title':r['title'],'characters':len(r['body']),'created':r['created']} for r in rows]
+            if full:
+                return [dict(r) for r in db.execute('SELECT id,title,body,created FROM documents WHERE owner=? ORDER BY created DESC', (owner,))]
+            # listing never loads bodies, and is computed once per change (10,000 documents / 300MB must list in milliseconds)
+            if owner not in self._listing:
+                self._listing[owner] = [dict(r) for r in db.execute('SELECT id,title,length(body) AS characters,created FROM documents WHERE owner=? ORDER BY created DESC', (owner,))]
+            return [dict(r) for r in self._listing[owner]]
+
+    def document_count(self, owner):
+        with self.connect() as db:
+            return db.execute('SELECT count(*) FROM documents WHERE owner=?', (owner,)).fetchone()[0]
+
+    def search_documents(self, owner, query, limit=10, candidates=30):
+        """Owner's documents that match the query, best first.
+        A document is a hit only when more than half of the query's units (words / bigrams) occur in it: one shared
+        common bigram is not a match, and a query nobody wrote about returns nothing.
+        FTS5: the hit set is exact and uncapped - one posting-list scan per unit counts, per document, how many units it has
+        (no body is read for that). The hits are then taken in rank order: first the documents that contain every run of the
+        query (phrase = substring), then any-token matches, each ordered by BM25 with the title weighted 8x the body
+        (length-normalised, so a short exact page beats a long bundle); only the chosen `candidates` bodies are loaded.
+        Finally one part per imported bundle before second parts of the same bundle. Without FTS5: the historical scan with
+        the same hit rule."""
+        wanted = terms(query)
+        if not wanted:
+            return []
+        needed = len(wanted) // 2 + 1
+        with self.connect() as db:
+            if self.fts:
+                # whose rows: the owner's document rowids (the first columns of a documents row; bodies are not read)
+                mine = {r[0] for r in db.execute('SELECT rowid FROM documents WHERE owner=?', (owner,))}
+                units = collections.Counter()
+                for unit in wanted:
+                    for (rowid,) in db.execute('SELECT rowid FROM documents_fts WHERE documents_fts MATCH ?', ('"' + unit + '"',)):
+                        if rowid in mine:
+                            units[rowid] += 1
+                hits = {rowid for rowid, n in units.items() if n >= needed}
+                ranked, seen = [], set()
+                order = 'SELECT rowid FROM documents_fts WHERE documents_fts MATCH ? ORDER BY bm25(documents_fts,0,0,8.0,1.0)'
+                for expression in ((fts_query_all(query), fts_query(query)) if hits else ()):
+                    for (rowid,) in db.execute(order, (expression,)):
+                        if len(ranked) >= candidates:
+                            break
+                        if rowid in hits and rowid not in seen:
+                            seen.add(rowid)
+                            row = db.execute('SELECT id,title,body,created FROM documents WHERE owner=? AND rowid=?', (owner, rowid)).fetchone()
+                            if row:
+                                ranked.append(dict(row))
+                    if len(ranked) >= candidates:
+                        break
+            else:
+                scored = []
+                for r in db.execute('SELECT id,title,body,created FROM documents WHERE owner=?', (owner,)):
+                    score = len(wanted & terms(r['title'] + ' ' + r['body']))
+                    if score >= needed:
+                        scored.append((score, r['created'], dict(r)))
+                scored.sort(key=lambda x: (-x[0], -x[1]))
+                ranked = [x[2] for x in scored[:candidates]]
+        first, rest, seen = [], [], set()
+        for doc in ranked:
+            key = BUNDLE_SUFFIX.sub('', doc['title']).strip()
+            (rest if key in seen else first).append(doc)
+            seen.add(key)
+        return (first + rest)[:limit]
 
     def document(self, owner, identifier):
         with self.connect() as db:
@@ -193,6 +293,18 @@ class Store:
             row = db.execute('SELECT payload FROM reports WHERE owner=? AND id=?', (owner,identifier)).fetchone()
             return json.loads(row['payload']) if row else None
 
+    def delete_report(self, owner, identifier):
+        """Deletes one saved research of this owner only. True when a row went away."""
+        if not isinstance(identifier, str) or not identifier:
+            return False
+        with self.connect() as db:
+            return db.execute('DELETE FROM reports WHERE owner=? AND id=?', (owner, identifier)).rowcount == 1
+
+    def delete_reports(self, owner):
+        """Deletes every saved research of this owner. Returns how many rows went away."""
+        with self.connect() as db:
+            return db.execute('DELETE FROM reports WHERE owner=?', (owner,)).rowcount
+
     def preferences(self, owner, value=None):
         with self.connect() as db:
             if value is not None:
@@ -211,10 +323,10 @@ class Store:
         if not isinstance(payload,dict) or payload.get('format') != 'rustxng-private-backup-v1':
             raise ValueError('invalid_backup')
         docs = payload.get('documents')
-        if not isinstance(docs,list) or len(docs)>500:
+        if not isinstance(docs,list) or len(docs)>self.limits['documents_per_owner']:
             raise ValueError('invalid_backup')
         for doc in docs:
-            if not isinstance(doc,dict) or not isinstance(doc.get('title'),str) or not 0<len(doc['title'])<=200 or not isinstance(doc.get('body'),str) or not 0<len(doc['body'])<=100000:
+            if not isinstance(doc,dict) or not isinstance(doc.get('title'),str) or not 0<len(doc['title'])<=200 or not isinstance(doc.get('body'),str) or not 0<len(doc['body'])<=self.limits['document_chars']:
                 raise ValueError('invalid_backup')
         pref=payload.get('preferences',{'profile':'general'})
         if not isinstance(pref,dict) or pref.get('profile') not in ('general','development','sales','sns'):raise ValueError('invalid_backup')
@@ -238,11 +350,15 @@ class Store:
                 if not doc['title'] or not doc['body'].strip():raise ValueError('invalid_backup')
                 fp=hashlib.sha256((doc['title']+'\0'+doc['body']).encode()).hexdigest()
                 if fp not in existing: additions[fp]=doc
-            if len(existing)+len(additions)>500: raise ValueError('document_limit')
-            used=db.execute('SELECT coalesce(sum(length(CAST(title AS BLOB))+length(CAST(body AS BLOB))),0) FROM documents WHERE owner=?',(owner,)).fetchone()[0]
-            if used+sum(len(d['title'].encode())+len(d['body'].encode()) for d in additions.values())>1500000:raise ValueError('document_limit')
+            if len(existing)+len(additions)>self.limits['documents_per_owner']: raise ValueError('document_limit')
+            self._used.pop(owner,None); self._listing.pop(owner,None)  # restore recounts from the rows (and again on the next insert)
+            used=self._bytes_used(db, owner)
+            if used+sum(len(d['title'].encode())+len(d['body'].encode()) for d in additions.values())>self.limits['document_bytes_per_owner']:raise ValueError('document_limit')
+            self._used.pop(owner,None)
             for fp,doc in additions.items():
-                db.execute('INSERT INTO documents VALUES(?,?,?,?,?,?)',(secrets.token_hex(16),owner,doc['title'],doc['body'],fp,time.time()))
+                identifier=secrets.token_hex(16)
+                db.execute('INSERT INTO documents VALUES(?,?,?,?,?,?)',(identifier,owner,doc['title'],doc['body'],fp,time.time()))
+                self._index_document(db, owner, identifier, doc['title'], doc['body'])
             id_map={}
             for doc in docs:
                 fp=hashlib.sha256((doc['title'].strip()+'\0'+doc['body']).encode()).hexdigest()

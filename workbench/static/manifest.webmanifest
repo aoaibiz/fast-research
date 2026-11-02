@@ -1,0 +1,16 @@
+{
+  "name": "高速リサーチ",
+  "short_name": "高速リサーチ",
+  "description": "公開Webと社内資料を出典つきで速く調べる。",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f5f8",
+  "theme_color": "#17225e",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

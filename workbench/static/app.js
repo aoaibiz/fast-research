@@ -1,6 +1,7 @@
 'use strict';
 // All data reaches the DOM through textContent / createTextNode only. No innerHTML, no inline handlers (CSP).
 let session = null, setup = false, epoch = 0, platform = '', backendHealthy = null, localTried = false;
+let docCount = null, limits = {}, currentView = 'gate', openedReportId = null;
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const VIEWS = ['gate', 'search', 'reports', 'documents', 'settings', 'ai'];
@@ -26,7 +27,8 @@ async function api(path, body) {
   const response = await fetch(path, {
     method: body === undefined ? 'GET' : 'POST',
     headers: body === undefined ? {} : { 'Content-Type': 'application/json', 'X-CSRF-Token': session?.csrf || '' },
-    body: body === undefined ? undefined : JSON.stringify(body)
+    // a Blob (the backup file) is sent as it is: the browser streams it, nothing is parsed or copied on this side
+    body: body === undefined ? undefined : body instanceof Blob ? body : JSON.stringify(body)
   });
   let data;
   try { data = await response.json(); } catch { throw Error('応答を読み取れません。画面を更新してください。'); }
@@ -54,31 +56,38 @@ applyTheme(themePref());
 
 /* ---------- views ---------- */
 function showOnly(view) {
+  currentView = view;
   for (const name of VIEWS) $('#view-' + name).hidden = name !== view;
   $('#app').classList.toggle('gate-mode', view === 'gate');
+  $('#app').dataset.view = view;
   const tab = view === 'ai' ? 'settings' : view;
   for (const b of $$('#nav button')) b.setAttribute('aria-current', b.dataset.view === tab ? 'page' : 'false');
+  // Phone: away from 調べる, or while a result is on screen, the box folds to one line (scope chip + query + 調べる).
+  setCompact(view !== 'search' || !!$('#result').firstChild);
+  updatePrivateEmpty();
   window.scrollTo(0, 0);
 }
 async function showView(view) {
   if (!session && view !== 'ai') view = 'gate';
   showOnly(view);
   if (view === 'documents') await loadDocs();
-  if (view === 'reports') { $('#report-detail').hidden = true; $('#report-list').hidden = false; await loadReports(); }
+  if (view === 'reports') { $('#report-detail').hidden = true; $('#report-list').hidden = false; openedReportId = null; await loadReports(); }
   if (view === 'settings') await health();
   if (view === 'ai') $('#mcp-download').hidden = !session;
   if (view === 'search') { $('#query').focus({ preventScroll: true }); if (!$('#result').firstChild) await loadRecent(); }
 }
 
 function clearPrivate() {
-  epoch++; session = null;
+  epoch++; session = null; docCount = null; openedReportId = null;
   for (const s of ['#result', '#recent', '#saved-result', '#document-list', '#report-list', '#diagnostics', '#health']) $(s).replaceChildren();
   $('#document-detail').textContent = ''; $('#document-detail').hidden = true;
   $('#nav').hidden = true; $('#logout').hidden = true; $('#identity').textContent = ''; $('#gate-ai-link').hidden = false;
-  $('#side-foot').hidden = true; for (const n of $$('[data-identity], [data-avatar]')) n.textContent = '';
+  $('#side-foot').hidden = true; $('#search-form').hidden = true; for (const n of $$('[data-identity], [data-avatar]')) n.textContent = '';
   $('#health-dot').className = 'dot none'; setCompact(false);
   $('#phone-link').hidden = true; $('#phone-qr').removeAttribute('src'); $('#phone-url').textContent = '';
+  $('#delete-all-confirm').hidden = true; $('#delete-all').hidden = true; $('#report-count').textContent = '';
   for (const f of ['#search-form', '#document-form', '#account-form', '#restore-form']) $(f).reset();
+  setDocCount(null);
 }
 
 function randomPassword() {
@@ -87,9 +96,20 @@ function randomPassword() {
   return [...bytes].map(b => alphabet[b % alphabet.length]).join('');
 }
 
+// 社内資料 = the documents this person registered. The count sits on the scope tile and on the 社内資料 page; 0 shows the way to add one.
+function setDocCount(n) {
+  docCount = typeof n === 'number' ? n : null;
+  for (const el of $$('[data-doc-count]')) { el.textContent = docCount === null ? '' : docCount.toLocaleString('ja-JP') + '件'; el.hidden = docCount === null; }
+  if (session) scopeChanged(); else updatePrivateEmpty();
+}
+function updatePrivateEmpty() {
+  const box = $('#private-empty');
+  box.hidden = !(session && currentView === 'search' && currentScope() === 'private' && docCount === 0 && !$('#result').firstChild);
+}
+
 async function init() {
   const data = await api('/api/session');
-  setup = data.setup_needed; platform = data.platform || '';
+  setup = data.setup_needed; platform = data.platform || ''; limits = data.limits || {};
   session = data.user ? data : null;
   // On this PC the server signs in the first admin by itself (not through the tunnel); once per page load, so logout sticks.
   if (!session && data.this_pc && !localTried) {
@@ -97,6 +117,7 @@ async function init() {
     try { await api('/api/local-login', {}); return await init(); } catch { /* fall back to the password screen */ }
   }
   const gate = $('#view-gate');
+  if (limits.document_chars) $('#document-form [name=body]').maxLength = limits.document_chars;
   if (!session) {
     $('#auth-form').hidden = !setup; $('#pw-open').hidden = setup;
     $('#gate-title').textContent = setup ? 'はじめる' : 'ログイン';
@@ -104,18 +125,19 @@ async function init() {
     const form = $('#auth-form');
     form.elements.password.autocomplete = setup ? 'new-password' : 'current-password';
     if (setup) { form.elements.name.value = form.elements.name.value || '自分'; if (!form.elements.password.value) form.elements.password.value = randomPassword(); }
-    $('#nav').hidden = true; $('#logout').hidden = true; $('#gate-ai-link').hidden = false; $('#side-foot').hidden = true;
+    $('#nav').hidden = true; $('#logout').hidden = true; $('#gate-ai-link').hidden = false; $('#side-foot').hidden = true; $('#search-form').hidden = true;
     if (!$('#view-ai').hidden) return;
     showOnly('gate'); gate.hidden = false;
     return;
   }
   $('#identity').textContent = data.user.name; $('#logout').hidden = false; $('#nav').hidden = false; $('#gate-ai-link').hidden = true;
-  $('#side-foot').hidden = false;
+  $('#side-foot').hidden = false; $('#search-form').hidden = false;
   for (const n of $$('[data-identity]')) n.textContent = data.user.name;
   for (const n of $$('[data-avatar]')) n.textContent = [...data.user.name][0] || '';
   const admin = data.user.role === 'admin';
   for (const s of ['#account-controls', '#restart', '#stop']) $(s).hidden = !admin;
   $('#phone-open').hidden = !(admin && data.phone_link);
+  setDocCount(data.document_count);
   const pref = await api('/api/preferences'); $('#profile').value = pref.profile;
   const savedScope = stored('scope');
   if (SCOPE_LABEL[savedScope]) setScope(savedScope); else scopeChanged();
@@ -154,13 +176,13 @@ async function logout() {
 }
 for (const b of [$('#logout'), ...$$('[data-logout]')]) b.addEventListener('click', logout);
 
-/* ---------- search form ---------- */
+/* ---------- search form (lives in the band, usable from every screen) ---------- */
 function currentScope() { return $('#search-form').elements.scope.value; }
 function setScope(value) { for (const r of $$('#search-form [name=scope]')) r.checked = r.value === value; scopeChanged(); }
 function scopeChanged() {
   const scope = currentScope();
   const chip = $('#scope-chip');
-  chip.querySelector('[data-chip-label]').textContent = SCOPE_LABEL[scope];
+  chip.querySelector('[data-chip-label]').textContent = SCOPE_LABEL[scope] + (scope !== 'public' && docCount !== null ? ' ' + docCount.toLocaleString('ja-JP') + '件' : '');
   chip.querySelector('[data-chip-note]').textContent = SCOPE_SEND[scope];
   chip.querySelector('use').setAttribute('href', '#' + SCOPE_ICON[scope]);
   chip.classList.toggle('safe', scope === 'private');
@@ -168,9 +190,9 @@ function scopeChanged() {
   $('#search-form').elements.profile.closest('label').hidden = scope === 'private';
   $('#search-form').elements.domains.closest('label').hidden = scope === 'private';
   stored('scope', scope);
+  updatePrivateEmpty();
 }
 for (const r of $$('#search-form [name=scope]')) r.addEventListener('change', scopeChanged);
-// Phone: while a result is on screen the box folds to one line (scope chip + query + 調べる). The chip unfolds it.
 function setCompact(on) { $('#search-form').classList.toggle('compact', on); $('#scope-chip').setAttribute('aria-expanded', String(!on)); }
 $('#scope-chip').addEventListener('click', () => { setCompact(false); $('#search-form [name=scope]:checked').focus(); });
 
@@ -188,9 +210,10 @@ $('#search-form').addEventListener('submit', e => {
   };
   if (scope === 'combined') data.public_query = String(f.get('public_query') || '').trim() || query;
   action(form, async () => {
+    if (currentView !== 'search') showOnly('search');
     const box = $('#result');
-    $('#recent').replaceChildren(); setCompact(true);
-    box.replaceChildren(loadingState(publicScope));
+    $('#recent').replaceChildren(); $('#private-empty').hidden = true; setCompact(true);
+    box.replaceChildren(loadingState(publicScope, query, scope));
     let result;
     try { result = await api('/api/search', data); } catch (error) { box.replaceChildren(failureBlock(error.message)); throw error; }
     renderReport(box, result, { live: true });
@@ -199,16 +222,22 @@ $('#search-form').addEventListener('submit', e => {
   });
 });
 
-function loadingState(publicScope) {
-  const wrap = node('div', undefined, 'loading'); wrap.setAttribute('aria-busy', 'true');
-  const box = node('section', undefined, 'state');
-  const line = node('p', undefined, 'line1');
-  const elapsed = node('span', '0秒', 'elapsed');
-  line.append(node('span', undefined, 'spin'), document.createTextNode(publicScope ? '検索して本文を取得しています' : '社内資料を検索しています'), elapsed);
-  box.append(line); wrap.append(box);
+function fmtSeconds(s) { if (typeof s !== 'number' || !isFinite(s)) return null; return s < 1 ? s.toFixed(2) : s < 10 ? s.toFixed(1) : String(Math.round(s)); }
+
+// While waiting, the number people wait for is already on screen and ticking; the cards below are skeletons.
+function loadingState(publicScope, query, scope) {
+  const wrap = node('section', undefined, 'rep loading'); wrap.setAttribute('aria-busy', 'true');
+  const main = node('div', undefined, 'rep-main');
+  const head = node('header', undefined, 'rep-head'); head.append(node('h2', query));
+  const chips = node('div', undefined, 'chips'); chips.append(chip(SCOPE_LABEL[scope] || '調査', '')); head.append(chips); main.append(head);
+  const speed = node('section', undefined, 'speed');
+  const big = node('p', undefined, 'sp-t num'); const t = node('span', '0.0'); big.append(t, node('small', '秒'));
+  const line = node('p', undefined, 'sp-l'); line.append(node('span', undefined, 'spin'), document.createTextNode(publicScope ? '検索して本文を取得しています' : '社内資料を検索しています'));
+  speed.append(big, line); main.append(speed);
   const started = Date.now();
-  const tick = setInterval(() => { if (!elapsed.isConnected) { clearInterval(tick); return; } elapsed.textContent = Math.floor((Date.now() - started) / 1000) + '秒'; }, 1000);
-  for (let k = 0; k < 3; k++) { const c = node('div', undefined, 'skcard'); for (const w of ['w40', 'w92', 'w76']) c.append(node('div', undefined, 'sk ' + w)); wrap.append(c); }
+  const tick = setInterval(() => { if (!t.isConnected) { clearInterval(tick); return; } t.textContent = fmtSeconds((Date.now() - started) / 1000); }, 100);
+  for (let k = 0; k < 3; k++) { const c = node('div', undefined, 'skcard'); for (const w of ['w40', 'w92', 'w76']) c.append(node('div', undefined, 'sk ' + w)); main.append(c); }
+  wrap.append(main);
   return wrap;
 }
 
@@ -334,12 +363,21 @@ function conflictBlock(c) {
   return box;
 }
 
-// 使える根拠: one big number + the four-part bar. Built by a function so the phone and PC copies are separate live nodes.
-function summaryPanel(r, sources, n, conflicts) {
-  const panel = node('section', undefined, 'panel');
-  panel.append(node('h2', '使える根拠'));
-  const big = node('p', String(n.usable), 'hero-n num'); big.append(node('span', '/ ' + sources.length, 'of')); panel.append(big);
-  if (r.scope === 'private') return panel;
+// 速さが主役: the seconds first, then 使える根拠 n / m and the four-part bar. One function, called for the phone and the PC copy.
+function speedPanel(r, sources, n, conflicts) {
+  const panel = node('section', undefined, 'speed');
+  const secs = fmtSeconds(r.elapsed_seconds ?? r.public?.elapsed_seconds);
+  const big = node('p', undefined, 'sp-t num');
+  if (secs !== null) big.append(document.createTextNode(secs), node('small', '秒')); else big.append(document.createTextNode('—'));
+  panel.append(big);
+  const row = node('div', undefined, 'sp-row');
+  const u = node('p', undefined, 'sp-n num'); u.append(node('span', '使える根拠', 'sp-k'), document.createTextNode(String(n.usable)), node('small', '/ ' + sources.length));
+  row.append(u);
+  if (r.scope === 'private') {
+    if (docCount !== null) { const d = node('p', undefined, 'sp-n num'); d.append(node('span', '登録した資料', 'sp-k'), document.createTextNode(docCount.toLocaleString('ja-JP')), node('small', '件')); row.append(d); }
+    panel.append(row); return panel;
+  }
+  panel.append(row);
   const bar = node('div', undefined, 'bar'); bar.setAttribute('role', 'img');
   bar.setAttribute('aria-label', '使える ' + n.usable + '件、本文は未取得 ' + n.unfetched + '件、本文に一致なし ' + n.nomatch + '件、取れなかった ' + n.missing + '件');
   for (const [k, cls] of [['usable', 'ok'], ['nomatch', 'warn'], ['unfetched', 'none'], ['missing', 'bad']]) if (n[k]) { const part = node('i', undefined, cls); part.style.flex = String(n[k]); bar.append(part); }
@@ -396,7 +434,7 @@ function renderReport(container, r, opts = {}) {
   const profile = r.profile || r.public?.profile;
   if (!isPrivate && PROFILE_LABEL[profile]) chips.append(chip(PROFILE_LABEL[profile], ''));
   const created = parseDate(r.created_at);
-  chips.append(chip((created ? fmtDateTime(created) : '—') + (typeof r.elapsed_seconds === 'number' ? ' · ' + r.elapsed_seconds.toFixed(1) + '秒' : ''), '', 'num'));
+  chips.append(chip(created ? fmtDateTime(created) : '—', '', 'num'));
   head.append(chips); main.append(head);
 
   if (r.scope === 'combined' && r.public?.status === 'failed') {
@@ -405,6 +443,8 @@ function renderReport(container, r, opts = {}) {
     if (r.external_query_sent === null) w.append(node('p', '送信結果を確認できません'));
     main.append(w);
   }
+  main.append(wrap('m-only', speedPanel(r, sources, n, conflicts)));
+  rail.append(wrap('pc-only', speedPanel(r, sources, n, conflicts)));
   if (!sources.length) {
     const st = node('section', undefined, 'state');
     st.append(node('p', isPrivate ? '一致する資料がありません' : '結果がありませんでした', 'line1'));
@@ -413,9 +453,6 @@ function renderReport(container, r, opts = {}) {
     else if (opts.live) a.append(button('条件を絞る', 'btn btn-secondary', () => { setCompact(false); const d = $('#options'); d.open = true; d.querySelector('summary').focus(); }));
     if (a.firstChild) st.append(a);
     main.append(st);
-  } else {
-    main.append(wrap('m-only', summaryPanel(r, sources, n, conflicts)));
-    rail.append(wrap('pc-only', summaryPanel(r, sources, n, conflicts)));
   }
   for (const c of conflicts) main.append(conflictBlock(c));
   if (sources.length) {
@@ -452,48 +489,78 @@ $('#document-form').addEventListener('submit', e => {
 });
 async function loadDocs() {
   const d = await api('/api/documents'); const list = $('#document-list'); list.replaceChildren();
+  setDocCount(d.documents.length);
   if (!d.documents.length) { list.append(emptyState('i-doc', 'まだ資料がありません')); return; }
   const card = node('div', undefined, 'card'); card.append(node('h2', '登録した資料'));
   for (const doc of d.documents) {
     const row = node('div', undefined, 'list-row');
-    const text = node('div', undefined, 'row-text'); text.append(node('strong', doc.title), node('span', doc.characters + '文字 · ' + (parseDate(doc.created) ? fmtDate(parseDate(doc.created)) : ''), 'meta'));
+    const text = node('div', undefined, 'row-text'); text.append(node('strong', doc.title), node('span', Number(doc.characters).toLocaleString('ja-JP') + '文字 · ' + (parseDate(doc.created) ? fmtDate(parseDate(doc.created)) : ''), 'meta'));
     row.append(text, button('開く', 'btn btn-secondary', () => openDocument(doc.id).catch(e => notice(e.message))));
     card.append(row);
   }
   list.append(card);
 }
 
-/* ---------- saved reports ---------- */
-function reportRow(report) {
-  const row = button(undefined, 'rrow');
-  const main = node('span', undefined, 'rrow-main'); main.append(node('strong', report.query));
+/* ---------- saved reports (open / delete one / delete all) ---------- */
+function reportRow(report, onDeleted) {
+  const row = node('div', undefined, 'rrow');
+  const main = button(undefined, 'rrow-main', () => openReport(report.id));
+  main.append(node('strong', report.query));
   const chips = node('span', undefined, 'chips');
   const created = parseDate(report.created);
   chips.append(chip(created ? fmtDateTime(created) : '日時不明', '', 'num'), chip(SCOPE_LABEL[report.scope] || '調査', report.scope === 'private' ? 'info' : ''));
   chips.append(chip('使える根拠 ' + (report.usable ?? 0) + (report.total ? ' / ' + report.total : ''), report.usable > 0 ? 'good' : 'warn', 'num'));
-  main.append(chips); row.append(main, icon('i-right'));
-  row.addEventListener('click', () => openReport(report.id));
+  main.append(chips);
+  // Delete is two taps on the same row: the bin, then 削除する (or やめる). Nothing leaves the list until the server said it is gone.
+  const side = node('span', undefined, 'rrow-side');
+  const del = button(undefined, 'rrow-del', () => { row.classList.add('confirming'); yes.focus(); });
+  del.setAttribute('aria-label', '削除'); del.title = '削除'; del.append(icon('i-trash'));
+  const yes = button('削除する', 'btn btn-danger-fill sm', async () => {
+    yes.disabled = true;
+    try { await api('/api/reports/' + report.id + '/delete', {}); row.remove(); notice(''); if (onDeleted) await onDeleted(); }
+    catch (e) { yes.disabled = false; row.classList.remove('confirming'); notice(e.message); }
+  });
+  const no = button('やめる', 'btn btn-secondary sm', () => { row.classList.remove('confirming'); del.focus(); });
+  side.append(del, yes, no);
+  row.append(main, side);
   return row;
 }
 async function openReport(id) {
   try {
     const r = await api('/api/reports/' + id);
-    showOnly('reports'); renderReport($('#saved-result'), r); $('#report-list').hidden = true; $('#report-detail').hidden = false; window.scrollTo(0, 0);
+    showOnly('reports'); renderReport($('#saved-result'), r); openedReportId = id; $('#report-list').hidden = true; $('#report-detail').hidden = false; window.scrollTo(0, 0);
   } catch (e) { notice(e.message); }
 }
 async function loadReports() {
   const d = await api('/api/reports'); const list = $('#report-list'); list.replaceChildren();
+  $('#report-count').textContent = d.reports.length ? d.reports.length + '件' : '';
+  $('#delete-all').hidden = !d.reports.length; if (!d.reports.length) $('#delete-all-confirm').hidden = true;
   if (!d.reports.length) { list.append(emptyState('i-saved', 'まだ調査がありません')); return; }
-  const rows = node('div', undefined, 'rows'); for (const report of d.reports) rows.append(reportRow(report)); list.append(rows);
+  const rows = node('div', undefined, 'rows'); for (const report of d.reports) rows.append(reportRow(report, loadReports)); list.append(rows);
 }
 async function loadRecent() {
   const d = await api('/api/reports'); const box = $('#recent'); box.replaceChildren();
-  if ($('#result').firstChild || !d.reports.length) return;
+  if ($('#result').firstChild) return;
+  if (!d.reports.length) { box.append(emptyState('i-saved', 'まだ調査がありません')); return; }
   const h = node('div', undefined, 'sec-h'); h.append(node('h2', '最近の調査'));
-  const rows = node('div', undefined, 'rows'); for (const report of d.reports.slice(0, 5)) rows.append(reportRow(report));
+  if (d.reports.length > 5) h.append(button('すべて見る', 'btn btn-text', () => showView('reports').catch(e => notice(e.message))));
+  const rows = node('div', undefined, 'rows'); for (const report of d.reports.slice(0, 5)) rows.append(reportRow(report, loadRecent));
   box.append(h, rows);
 }
-$('#report-back').addEventListener('click', () => { $('#report-detail').hidden = true; $('#report-list').hidden = false; loadReports().catch(e => notice(e.message)); });
+$('#report-back').addEventListener('click', () => { $('#report-detail').hidden = true; $('#report-list').hidden = false; openedReportId = null; loadReports().catch(e => notice(e.message)); });
+$('#report-delete').addEventListener('click', async () => {
+  const b = $('#report-delete');
+  if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = '本当に削除する'; setTimeout(() => { b.classList.remove('armed'); b.replaceChildren(icon('i-trash'), document.createTextNode('この調査を削除')); }, 4000); return; }
+  try { await api('/api/reports/' + openedReportId + '/delete', {}); b.classList.remove('armed'); b.replaceChildren(icon('i-trash'), document.createTextNode('この調査を削除')); $('#saved-result').replaceChildren(); await showView('reports'); notice(''); }
+  catch (e) { notice(e.message); }
+});
+$('#delete-all').addEventListener('click', () => { $('#delete-all-text').textContent = '保存した調査 ' + $('#report-count').textContent + 'をすべて削除します'; $('#delete-all-confirm').hidden = false; $('#delete-all-yes').focus(); });
+$('#delete-all-no').addEventListener('click', () => { $('#delete-all-confirm').hidden = true; $('#delete-all').focus(); });
+$('#delete-all-yes').addEventListener('click', async () => {
+  const b = $('#delete-all-yes'); b.disabled = true;
+  try { await api('/api/reports/delete-all', {}); $('#delete-all-confirm').hidden = true; await loadReports(); notice(''); }
+  catch (e) { notice(e.message); } finally { b.disabled = false; }
+});
 
 /* ---------- settings ---------- */
 async function health() {
@@ -511,8 +578,11 @@ $('#restore-form').addEventListener('submit', e => {
   e.preventDefault();
   action(e.target, async () => {
     const file = $('#restore-file').files[0];
-    if (!file || file.size > 16 * 1024 * 1024) throw Error('16MB以下のバックアップを選んでください。');
-    const d = await api('/api/restore', JSON.parse(await file.text())); notice(d.restored + '件を復元しました。');
+    const most = limits.restore_bytes || 16 * 1024 * 1024;
+    if (!file || file.size > most) throw Error(Math.floor(most / 1000000) + 'MB以下のバックアップを選んでください。');
+    const d = await api('/api/restore', file);
+    const docs = await api('/api/documents'); setDocCount(docs.documents.length);  // the count is right before the message says done
+    notice(d.restored + '件を復元しました。');
   });
 });
 $('#account-form').addEventListener('submit', e => {

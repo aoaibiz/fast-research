@@ -1,8 +1,18 @@
 # Changelog
 
+> **読み方**: `[0.26.0]` 以前の項目は、元になった RustXNG(https://github.com/sahenjp/rustxng)の履歴をそのまま残した物です。そこに出てくる GitHub Actions の workflow・GHCR の Docker イメージ・ラベル整備などは上流の置き場の物で、この公開の置き場(aoaibiz/fast-research)からは配布していません。高速リサーチ(fast-research)としての変更は `[Unreleased]` に書きます。
+
 このファイルの形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に従います。バージョニング方針は本文末尾の「セマンティックバージョニング」を参照してください。
 
 ## [Unreleased]
+
+### 高速リサーチ(fast-research)
+
+- 画面の名前を「高速リサーチ」に(title・帯・ログイン・設定・manifest)。MCP サーバー名 `talmud-research` と Python パッケージ名は変えていません
+- ホーム画面に追加した時のアイコン: `/manifest.webmanifest`・`/icon-192.png`・`/icon-512.png`・`/icon-512-maskable.png`・`/apple-touch-icon.png`(180)・`/favicon.ico`・`/favicon.svg`
+- 保存した調査を 1 件ずつ・まとめて消せる(`POST /api/reports/<id>/delete`・`POST /api/reports/delete-all`・本人の行だけ)
+- 画面の刷新: 濃紺の帯に名前・検索・範囲を置き、結果は秒→使える根拠 n/m→出典。PC は帯の中の横ナビ、スマホは下のタブ。社内資料は件数と空の状態で分かる
+- 社内資料の容量を設定に(`--doc-chars` 既定 2,000,000・`--doc-count` 10,000・`--doc-bytes` 300,000,000)。検索は SQLite FTS5(日本語 2 文字区切り+英数字)の BM25(題名 8 倍)で、束の 1 部ずつを先に
 
 ## [0.26.0] - 2026-11-01
 

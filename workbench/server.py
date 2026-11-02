@@ -34,9 +34,9 @@ MESSAGES={
  'search_unavailable':'検索エンジンに接続できません。設定画面で検索エンジンを再起動してください。',
  'engine_configuration_error':'検索エンジンの設定を確認してください。','invalid_backend_response':'検索エンジンの応答を読み取れません。設定画面を確認してください。',
  'password_length':'パスワードは12〜256文字で入力してください。','invalid_name':'利用者名を1〜64文字で入力してください。',
- 'invalid_title':'資料名を1〜200文字で入力してください。','document_length':'資料本文を1〜100,000文字で入力してください。',
+ 'invalid_title':'資料名を1〜200文字で入力してください。','document_length':'資料本文を1〜{document_chars}文字で入力してください。',
  'report_limit':'保存した調査が容量上限に達しました。バックアップを取得し、エージェントに整理を依頼してください。',
- 'invalid_backup':'バックアップの形式を確認してください。','document_limit':'資料は1利用者500件までです。',
+ 'invalid_backup':'バックアップの形式を確認してください。','document_limit':'資料は1利用者{documents_per_owner}件・合計{document_mb}MBまでです。',
  'setup_finished':'初期設定済みです。ログインしてください。','invalid_credentials':'利用者名またはパスワードを確認してください。',
  'authentication_required':'ログインしてください。','origin_refused':'この画面を開き直してください。','csrf_refused':'画面を更新して操作をやり直してください。',
  'not_found':'対象が見つからないか、参照する権限がありません。','rate_limited':'操作が集中しています。1分後に試してください。',
@@ -53,6 +53,15 @@ MESSAGES={
 
 SESSION_SECONDS=7*24*3600
 PR_SET_PDEATHSIG=1
+# Files the screen may fetch by name (everything else under / goes back to the screen). Icons: the same set our other apps ship
+# (manifest + apple-touch-icon 180 + 192/512 + maskable + favicon) so "add to home screen" shows 高速リサーチ with its own icon.
+STATIC_FILES={
+ '/app.js':('app.js','text/javascript; charset=utf-8'),'/boot.js':('boot.js','text/javascript; charset=utf-8'),'/style.css':('style.css','text/css; charset=utf-8'),
+ '/manifest.webmanifest':('manifest.webmanifest','application/manifest+json; charset=utf-8'),
+ '/icon-192.png':('icons/icon-192.png','image/png'),'/icon-512.png':('icons/icon-512.png','image/png'),'/icon-512-maskable.png':('icons/icon-512-maskable.png','image/png'),
+ '/apple-touch-icon.png':('icons/apple-touch-icon.png','image/png'),'/favicon-32.png':('icons/favicon-32.png','image/png'),'/favicon-16.png':('icons/favicon-16.png','image/png'),
+ '/favicon.ico':('icons/favicon.ico','image/x-icon'),'/favicon.svg':('icons/favicon.svg','image/svg+xml; charset=utf-8'),
+}
 
 try:  # resolved once, in the parent: nothing is imported or loaded between fork and exec
     _PRCTL=ctypes.CDLL(None,use_errno=True).prctl if sys.platform.startswith('linux') else None
@@ -159,8 +168,12 @@ def parse_public_origin(value):
     return f'https://{hostport}',hostport
 
 class App:
-    def __init__(self,path,port,backend_url,backend=None,public_origin=None):
-        self.store=Store(path);self.port=port;self.backend=backend
+    def __init__(self,path,port,backend_url,backend=None,public_origin=None,limits=None):
+        self.store=Store(path,limits);self.port=port;self.backend=backend
+        self.limit_text={**self.store.limits,'document_mb':self.store.limits['document_bytes_per_owner']//1000000}
+        # A backup holds the whole library (documents up to the per-person cap + reports up to 10MB) as JSON; its restore
+        # request may be that large. Every other request keeps MAX_INPUT.
+        self.restore_max=int((self.store.limits['document_bytes_per_owner']+10_000_000)*1.25)+1_000_000
         # Optional private-term deny-list next to the database (one term per line).
         self.research=Research(backend_url,denylist=Path(path).parent/'denylist.txt',denylist_optional=True,official_files=[Path(path).parent/'official-domains.txt'])
         self.research.guard=backend.ensure_owned if backend else guard_for_state(Path(path).parent/'backend-instance.json',urlsplit(backend_url).port)
@@ -202,7 +215,9 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers();self.wfile.write(data)
     def fail(self,status,code,stage='input'):
         self.app.event(self.request_id,stage,code,time.monotonic()-self.started)
-        self.send(status,{'ok':False,'error':{'code':code,'stage':stage,'message':MESSAGES.get(code,MESSAGES['unexpected_error']),'request_id':self.request_id}})
+        message=MESSAGES.get(code,MESSAGES['unexpected_error'])
+        if '{' in message:message=message.format(**{k:(f'{v:,}' if isinstance(v,int) else v) for k,v in self.app.limit_text.items()})
+        self.send(status,{'ok':False,'error':{'code':code,'stage':stage,'message':message,'request_id':self.request_id}})
     def token(self):
         try:
             cookie=http.cookies.SimpleCookie();cookie.load(self.headers.get('Cookie',''))
@@ -216,12 +231,12 @@ class Handler(BaseHTTPRequestHandler):
         origin=self.headers.get('Origin')
         return origin is None or origin in (self.app.origin,f'http://127.0.0.1:{self.app.port}')
     def session_cookie(self,token,seconds):return f"rxsession={token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age={seconds}"
-    def body(self):
+    def body(self,maximum=MAX_INPUT):
         if self.headers.get('Content-Type','').split(';')[0]!='application/json':raise ResearchError('invalid_request','input',415)
         if self.headers.get('Transfer-Encoding'):raise ResearchError('invalid_request','input',400)
         try:length=int(self.headers.get('Content-Length','0'))
         except ValueError:raise ResearchError('invalid_request','input',400)
-        if not 0<length<=MAX_INPUT:raise ResearchError('invalid_request','input',413)
+        if not 0<length<=maximum:raise ResearchError('invalid_request','input',413)
         self.connection.settimeout(10)
         try:
             data=json.loads(self.rfile.read(length))
@@ -241,12 +256,14 @@ class Handler(BaseHTTPRequestHandler):
             path=urlsplit(self.path).path
             if path=='/healthz' and method=='GET':return self.send(200,{'product':'rustxng-local-workbench','version':'local-research-1','instance':self.app.instance})
             if path=='/' and method=='GET':return self.send(200,(ROOT/'static/index.html').read_bytes(),'text/html; charset=utf-8')
-            if path in ('/app.js','/style.css','/boot.js') and method=='GET':return self.send(200,(ROOT/'static'/path[1:]).read_bytes(),'text/javascript; charset=utf-8' if path.endswith('.js') else 'text/css; charset=utf-8')
+            if path in STATIC_FILES and method=='GET':
+                name,content_type=STATIC_FILES[path];return self.send(200,(ROOT/'static'/name).read_bytes(),content_type)
             # A page address the screen does not know (e.g. chat apps gluing the next words onto a link) goes back to the screen, not to an API error body.
             if method=='GET' and not path.startswith('/api/'):return self.send(302,b'','text/plain; charset=utf-8',location='/')
             if path=='/api/session' and method=='GET':
                 s=self.app.store.session(self.token())
-                return self.send(200,{'setup_needed':not self.app.store.has_users(),'user':{'name':s['name'],'id':s['owner'],'role':s['role']} if s else None,'csrf':s['csrf'] if s else None,'profiles':PROFILES,'platform':sys.platform,'this_pc':self.from_this_pc(),'phone_link':bool(self.app.public_origin)})
+                return self.send(200,{'setup_needed':not self.app.store.has_users(),'user':{'name':s['name'],'id':s['owner'],'role':s['role']} if s else None,'csrf':s['csrf'] if s else None,'profiles':PROFILES,'platform':sys.platform,'this_pc':self.from_this_pc(),'phone_link':bool(self.app.public_origin),
+                                      'document_count':self.app.store.document_count(s['owner']) if s else 0,'limits':{**self.app.store.limits,'restore_bytes':self.app.restore_max}})
             if path in ('/api/setup','/api/login') and method=='POST':
                 if not self.app.limit(('login',self.client_address[0]),10):return self.fail(429,'rate_limited','authentication')
                 data=self.body()
@@ -272,7 +289,7 @@ class Handler(BaseHTTPRequestHandler):
             owner=session['owner']
             if method=='POST' and not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),session['csrf']):return self.fail(403,'csrf_refused','authorization')
             if path in ('/api/accounts','/api/restart','/api/stop','/api/phone-link') and session['role']!='admin':return self.fail(403,'not_found','authorization')
-            data=self.body() if method=='POST' else {}
+            data=self.body(self.app.restore_max if path=='/api/restore' else MAX_INPUT) if method=='POST' else {}
             if path=='/api/logout' and method=='POST':
                 self.app.store.logout(self.token());return self.send(200,{'ok':True},cookie=self.session_cookie('',0))
             if path=='/api/phone-link' and method=='POST':
@@ -317,6 +334,11 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send(200,report)
                 finally:self.app.search_slots.release()
             if path=='/api/reports' and method=='GET':return self.send(200,{'reports':self.app.store.reports(owner)})
+            # Deleting saved research: this owner's rows only (the store's DELETE carries owner=?); someone else's id is 404 and nothing changes.
+            if path=='/api/reports/delete-all' and method=='POST':return self.send(200,{'ok':True,'deleted':self.app.store.delete_reports(owner)})
+            if path.startswith('/api/reports/') and path.endswith('/delete') and method=='POST':
+                identifier=path[len('/api/reports/'):-len('/delete')]
+                return self.send(200,{'ok':True,'deleted':1}) if self.app.store.delete_report(owner,identifier) else self.fail(404,'not_found','authorization')
             if path.startswith('/api/reports/') and method=='GET':
                 report=self.app.store.report(owner,path.rsplit('/',1)[1]);return self.send(200,report) if report else self.fail(404,'not_found','authorization')
             if path=='/api/backup' and method=='GET':return self.send(200,self.app.store.export(owner),attachment='rustxng-private-backup.json')
@@ -343,7 +365,7 @@ class Handler(BaseHTTPRequestHandler):
                 with zipfile.ZipFile(buf,'w',zipfile.ZIP_DEFLATED) as archive:
                     paths=['Cargo.toml','Cargo.lock','LICENSE','NOTICE','README.md','settings.toml',
                            'src/public_web.rs','src/evidence.rs','docs/INSTALL-AI.md','docs/AI-USAGE.md','docs/WORKBENCH.md','docs/LOCAL-EVALUATION.md','docs/UPSTREAM-README.md']
-                    for directory,suffixes in [('src',{'.rs','.html','.css','.js','.json','.svg','.png','.ico','.txt','.tsv','.yml','.yaml'}),('tests',{'.rs'}),('templates',{'.html'}),('static',{'.css','.js','.svg','.png','.ico','.woff','.woff2'}),('workbench',{'.py','.html','.js','.css','.md','.txt'})]:
+                    for directory,suffixes in [('src',{'.rs','.html','.css','.js','.json','.svg','.png','.ico','.txt','.tsv','.yml','.yaml'}),('tests',{'.rs'}),('templates',{'.html'}),('static',{'.css','.js','.svg','.png','.ico','.woff','.woff2'}),('workbench',{'.py','.html','.js','.css','.md','.txt','.webmanifest','.svg','.png','.ico'})]:
                         paths += [str(p.relative_to(repo)) for p in (repo/directory).rglob('*') if p.is_file() and p.suffix in suffixes and '__pycache__' not in p.parts and 'test-output' not in p.parts]
                     paths += ['workbench/evaluation/questions.json','workbench/distribution/settings-default.toml','RustXNG.app/Contents/Info.plist','RustXNG.app/Contents/MacOS/launch']
                     for relative in sorted(set(paths)):
@@ -371,7 +393,11 @@ class Server(ThreadingHTTPServer):
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=18890);parser.add_argument('--backend-port',type=int,default=18889);parser.add_argument('--data',default=str(ROOT.parent/'local-data'));parser.add_argument('--binary',default=str(ROOT.parent/'target/debug/rustxng'));parser.add_argument('--no-backend',action='store_true');parser.add_argument('--public-origin',default=None,help='one https origin that may also reach this server (for example a tunnel); default: none')
     parser.add_argument('--issue-login-link',action='store_true',help='print a one-time login link (10 minutes, first admin) for --public-origin and exit')
+    parser.add_argument('--doc-chars',type=int,default=None,help='characters per private document (default 2,000,000)')
+    parser.add_argument('--doc-count',type=int,default=None,help='private documents per person (default 10,000)')
+    parser.add_argument('--doc-bytes',type=int,default=None,help='bytes of private documents per person (default 300,000,000)')
     args=parser.parse_args();data=Path(args.data);data.mkdir(parents=True,exist_ok=True,mode=0o700);os.chmod(data,0o700)
+    limits={'document_chars':args.doc_chars,'documents_per_owner':args.doc_count,'document_bytes_per_owner':args.doc_bytes}
     if args.issue_login_link:
         if not args.public_origin:parser.error('--issue-login-link needs --public-origin')
         try:origin=parse_public_origin(args.public_origin)[0]
@@ -382,7 +408,7 @@ def main():
         return
     logging.basicConfig(filename=data/'diagnostics.jsonl',level=logging.INFO,format='%(message)s');os.chmod(data/'diagnostics.jsonl',0o600)
     backend=None if args.no_backend else Backend(args.binary,args.backend_port,data)
-    try:app=App(data/'workbench.sqlite',args.port,f'http://127.0.0.1:{args.backend_port}',backend,args.public_origin)
+    try:app=App(data/'workbench.sqlite',args.port,f'http://127.0.0.1:{args.backend_port}',backend,args.public_origin,limits)
     except ValueError as error:
         if backend:backend.stop()
         parser.error(f'--public-origin must be a bare https origin such as https://example.org ({error})')

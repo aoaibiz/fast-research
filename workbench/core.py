@@ -27,10 +27,7 @@ class ResearchError(Exception):
 
 def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
 
-def terms(text):
-    latin=re.findall(r'[a-z0-9]{2,}',text.lower())
-    japanese=re.findall(r'[一-龯ぁ-んァ-ヶー]{2,}',text)
-    return set(latin + [s[i:i+2] for s in japanese for i in range(len(s)-1)])
+from .tokens import terms  # one tokenizer shared with the FTS5 index (workbench/tokens.py)
 
 def excerpt(text, query, limit=600):
     """Up to three fragments that really contain a query term. No match -> empty string
@@ -276,12 +273,12 @@ class Research:
 
     def private(self, q, store, owner):
         q=validate_query(q); start=time.monotonic(); wanted=terms(q); sources=[]
-        for doc in store.documents(owner,True):
+        # The store ranks (FTS5 BM25, title-weighted, one part per bundle first); the order is kept, score = matched units.
+        for doc in store.search_documents(owner,q,limit=10):
             score=len(wanted & terms(doc['title']+' '+doc['body']))
             if score==0: continue
             shown=excerpt(doc['body'],q)
             sources.append({'id':doc['id'],'title':doc['title'],'url':'','scope':'private','score':score,'excerpt':shown,'excerpt_matched':bool(shown),'match_terms':sorted(wanted)[:80],'quality':'local_document','created_at':doc['created'],'source_basis':'本人が登録した資料。内容の正確性は未確認。'})
-        sources.sort(key=lambda s:s['score'],reverse=True); sources=sources[:10]
         for i,s in enumerate(sources,1):s['citation']=f'L{i}'
         report={'query':q,'scope':'private','status':'ok' if sources else 'empty','sources':sources,'created_at':now(),'external_query_sent':False,'elapsed_seconds':round(time.monotonic()-start,4),'queries':[], 'verification':'登録資料の語句一致検索。外部照合は行っていません。','next_action':'該当箇所を確認してください。' if sources else '一致する資料がありません。資料を登録するか検索語を変えてください。'}
         report['markdown']=render_markdown(report);return report

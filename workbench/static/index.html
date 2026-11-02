@@ -1,6 +1,11 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>Talmud Research</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f4bc0'/%3E%3Cpath d='M11 9H8v14h3M21 9h3v14h-3' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23fff'/%3E%3C/svg%3E"><script src="/boot.js"></script><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head><body>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>高速リサーチ</title>
+<meta name="theme-color" content="#17225e"><meta name="application-name" content="高速リサーチ">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="高速リサーチ"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<script src="/boot.js"></script><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head><body>
 <svg class="sprite" width="0" height="0" aria-hidden="true">
 <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+<symbol id="i-fast" viewBox="0 0 24 24"><circle cx="13" cy="10" r="6"/><path d="M21 18l-3.8-3.8"/><path d="M3 8h4M2 12h5M3 16h4"/></symbol>
 <symbol id="i-saved" viewBox="0 0 24 24"><path d="M6 4h12v16l-6-4-6 4z"/></symbol>
 <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 12h5M10 16h5"/></symbol>
 <symbol id="i-set" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
@@ -13,12 +18,13 @@
 <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
 <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
 <symbol id="i-save" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></symbol>
-<symbol id="i-mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="currentColor" stroke="none"/><path d="M11 9H8v14h3M21 9h3v14h-3" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="16" cy="16" r="2.6" fill="#fff" stroke="none"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+<symbol id="i-mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="var(--mark-bg,currentColor)" stroke="none"/><circle cx="17.5" cy="13.5" r="6" fill="none" stroke="var(--mark-fg,#fff)" stroke-width="2.4"/><path d="M25.5 21.5l-3.8-3.8M6 11h4M5 15h5M6 19h4" fill="none" stroke="var(--mark-fg,#fff)" stroke-width="2.4"/></symbol>
 </svg>
 <div class="app" id="app">
-<header class="topbar"><a class="brand" href="/"><svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg><strong>Talmud Research</strong></a></header>
-<aside class="side">
-<a class="brand" href="/"><svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg><strong>Talmud Research</strong></a>
+<header class="band"><div class="band-in">
+<div class="band-top">
+<a class="brand" href="/"><svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg><strong>高速リサーチ</strong></a>
 <nav id="nav" aria-label="メニュー" hidden>
 <button type="button" data-view="search"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><span>調べる</span></button>
 <button type="button" data-view="reports"><svg class="ic" aria-hidden="true"><use href="#i-saved"/></svg><span>保存した調査</span></button>
@@ -26,16 +32,31 @@
 <button type="button" data-view="settings"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg><span>設定</span></button>
 </nav>
 <div class="side-foot" id="side-foot" hidden>
-<button type="button" class="btn btn-text side-ai" data-open-view="ai"><svg class="ic" aria-hidden="true"><use href="#i-plug"/></svg>AIとつなぐ</button>
-<div class="who"><span class="avatar" data-avatar aria-hidden="true"></span><span class="who-name" id="identity"></span><button id="logout" class="btn btn-secondary who-out" type="button" hidden>ログアウト</button></div>
+<button type="button" class="btn btn-band side-ai" data-open-view="ai"><svg class="ic" aria-hidden="true"><use href="#i-plug"/></svg>AIとつなぐ</button>
+<div class="who"><span class="avatar" data-avatar aria-hidden="true"></span><span class="who-name" id="identity"></span><button id="logout" class="btn btn-band who-out" type="button" hidden>ログアウト</button></div>
 </div>
-</aside>
+</div>
+<form id="search-form" class="composer" novalidate hidden>
+<button type="button" class="scope-chip" id="scope-chip" aria-expanded="false" aria-controls="scope-box"><svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg><span data-chip-label>公開Web</span><small data-chip-note>外部へ送信</small><svg class="ic" aria-hidden="true"><use href="#i-down"/></svg></button>
+<div class="qrow"><svg class="ic q-ic" aria-hidden="true"><use href="#i-search"/></svg><input name="query" id="query" type="search" maxlength="500" required autocomplete="off" aria-label="検索語" placeholder="入力してください。"><button id="search-submit" class="btn btn-primary primary">調べる</button></div>
+<div class="scope" id="scope-box" role="radiogroup" aria-label="検索する範囲">
+<label class="seg"><input type="radio" name="scope" value="public" checked><span><b><svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg>公開Web</b><small>外部へ送信</small></span></label>
+<label class="seg"><input type="radio" name="scope" value="private"><span><b><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>社内資料</b><small>外部へ送らない</small><i class="cnt num" data-doc-count hidden></i></span></label>
+<label class="seg"><input type="radio" name="scope" value="combined"><span><b><svg class="ic" aria-hidden="true"><use href="#i-both"/></svg>両方</b><small>公開分を送信</small></span></label>
+</div>
+<details id="options" class="opts"><summary>条件を絞る<svg class="ic" aria-hidden="true"><use href="#i-down"/></svg></summary>
+<div class="opts-grid"><label class="field">調査の種類<select name="profile" id="profile"><option value="general">一般調査</option><option value="development">開発・公式仕様</option><option value="sales">営業・企業調査</option><option value="sns">SNS・情報確認</option></select></label>
+<label class="field">対象ドメイン(任意・カンマ区切り)<input name="domains" placeholder="例: docs.python.org"></label>
+<label class="field wide" id="public-query-row" hidden>公開Webに送る語(空なら上の検索語と同じ)<input name="public_query" maxlength="500"></label></div>
+</details>
+</form>
+</div></header>
 <main class="content" id="main">
 <div id="notice" role="status" aria-live="polite"></div>
 
 <section id="view-gate" class="gate" hidden>
 <div class="gate-card">
-<div class="brand"><svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg><strong>Talmud Research</strong></div>
+<div class="brand"><svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg><strong>高速リサーチ</strong></div>
 <h1 id="gate-title">ログイン</h1>
 <div class="gate-pw"><button id="pw-open" class="btn btn-text" type="button" hidden>パスワードで入る</button></div>
 <form id="auth-form"><label class="field">利用者名<input name="name" autocomplete="username" required maxlength="64"></label>
@@ -46,34 +67,22 @@
 </section>
 
 <section id="view-search" hidden>
-<form id="search-form" class="composer" novalidate>
-<button type="button" class="scope-chip" id="scope-chip" aria-expanded="false" aria-controls="search-form"><svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg><span data-chip-label>公開Web</span><small data-chip-note>外部へ送信</small><svg class="ic" aria-hidden="true"><use href="#i-down"/></svg></button>
-<div class="scope" role="radiogroup" aria-label="検索する範囲">
-<label class="seg"><input type="radio" name="scope" value="public" checked><span><b><svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg>公開Web</b><small>外部へ送信</small></span></label>
-<label class="seg"><input type="radio" name="scope" value="private"><span><b><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>社内資料</b><small>外部へ送らない</small></span></label>
-<label class="seg"><input type="radio" name="scope" value="combined"><span><b><svg class="ic" aria-hidden="true"><use href="#i-both"/></svg>両方</b><small>公開分を送信</small></span></label>
-</div>
-<div class="qrow"><input name="query" id="query" type="search" maxlength="500" required autocomplete="off" aria-label="検索語" placeholder="入力してください。"><button id="search-submit" class="btn btn-primary primary">調べる</button></div>
-<details id="options" class="opts"><summary>条件を絞る<svg class="ic" aria-hidden="true"><use href="#i-down"/></svg></summary>
-<div class="opts-grid"><label class="field">調査の種類<select name="profile" id="profile"><option value="general">一般調査</option><option value="development">開発・公式仕様</option><option value="sales">営業・企業調査</option><option value="sns">SNS・情報確認</option></select></label>
-<label class="field">対象ドメイン(任意・カンマ区切り)<input name="domains" placeholder="例: docs.python.org"></label>
-<label class="field wide" id="public-query-row" hidden>公開Webに送る語(空なら上の検索語と同じ)<input name="public_query" maxlength="500"></label></div>
-</details>
-</form>
+<div id="private-empty" class="empty" hidden><div class="es-ico"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></div><p class="es-t">社内資料はまだありません</p><div class="actions es-a"><button type="button" class="btn btn-secondary" data-open-view="documents">資料を登録</button></div></div>
 <div id="result" aria-live="polite"></div>
 <div id="recent"></div>
 </section>
 
 <section id="view-reports" hidden>
-<div class="page-h"><h1>保存した調査</h1></div>
+<div class="page-h"><h1>保存した調査<span class="h-count num" id="report-count"></span></h1><button type="button" id="delete-all" class="btn btn-text btn-danger" hidden><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>すべて削除</button></div>
+<div id="delete-all-confirm" class="confirm" role="alertdialog" aria-labelledby="delete-all-text" hidden><p id="delete-all-text" class="line1"></p><div class="actions"><button type="button" id="delete-all-yes" class="btn btn-danger-fill">すべて削除</button><button type="button" id="delete-all-no" class="btn btn-secondary">やめる</button></div></div>
 <div id="report-list"></div>
-<div id="report-detail" hidden><button type="button" id="report-back" class="btn btn-text back"><svg class="ic" aria-hidden="true"><use href="#i-left"/></svg>一覧に戻る</button><div id="saved-result"></div></div>
+<div id="report-detail" hidden><div class="detail-bar"><button type="button" id="report-back" class="btn btn-text back"><svg class="ic" aria-hidden="true"><use href="#i-left"/></svg>一覧に戻る</button><button type="button" id="report-delete" class="btn btn-text btn-danger"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>この調査を削除</button></div><div id="saved-result"></div></div>
 </section>
 
 <section id="view-documents" hidden>
-<div class="page-h"><h1>社内資料</h1></div>
+<div class="page-h"><h1>社内資料<span class="h-count num" data-doc-count></span></h1></div>
 <div class="two">
-<form id="document-form" class="card"><h2>資料を登録</h2><label class="field">資料名<input name="title" maxlength="200" required></label><label class="field">本文<textarea name="body" rows="8" maxlength="100000" required placeholder="入力してください。"></textarea></label><button class="btn btn-primary primary">資料を登録</button></form>
+<form id="document-form" class="card"><h2>資料を登録</h2><label class="field">資料名<input name="title" maxlength="200" required></label><label class="field">本文<textarea name="body" rows="8" maxlength="2000000" required placeholder="入力してください。"></textarea></label><button class="btn btn-primary primary">資料を登録</button></form>
 <div class="doc-col"><div id="document-list"></div><pre id="document-detail" class="card doc-body" hidden></pre></div>
 </div>
 </section>
@@ -92,7 +101,7 @@
 <div class="card"><h2>アプリ</h2><div class="actions"><a class="btn btn-secondary" href="/api/source" download>ソースを取得(AGPL)</a><button type="button" id="stop" class="btn btn-secondary btn-danger">アプリを停止</button></div>
 <details class="opts"><summary>診断情報を表示<svg class="ic" aria-hidden="true"><use href="#i-down"/></svg></summary><pre id="diagnostics" class="diag"></pre></details></div>
 </div>
-<p class="license">Talmud Research · Based on RustXNG / AGPL-3.0-or-later</p>
+<p class="license">高速リサーチ · Based on RustXNG / AGPL-3.0-or-later</p>
 </section>
 
 <section id="view-ai" hidden>
